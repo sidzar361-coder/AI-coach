@@ -1,0 +1,177 @@
+@keyframes fadeIn{from {opacity: 0} to {opacity: 1;}}
+@keyframes moveIn{from {transform: translateY(9px);} to {transform: translateY(0px);}}
+@keyframes fadeBg {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+
+* {
+    padding: 0px;
+    margin: 0px;
+    box-sizing: border-box;
+    font-family: "Robust", sans-serif;
+}
+
+.container {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    flex-direction: column;
+    /* Initial gradient */
+     background: radial-gradient(circle, rgb(0, 0, 0), rgb(11, 6, 46), rgb(16, 8, 69));
+    overflow: hidden;
+}
+
+.container::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    /* Target gradient to transition into */
+    background: radial-gradient(circle, rgb(16, 8, 69), rgb(11, 6, 46), rgb(0, 0, 0));
+    z-index: 0;
+    /* Transitions once over 5 seconds and holds the final state */
+    animation: fadeBg 5s ease-in-out forwards;
+}
+
+.container > * {
+    position: relative;
+    z-index: 1;
+}
+
+
+.header #icon{
+    font-size: 35px;
+    padding-left: 10px;
+}
+
+.header{
+    color: white;
+    display: flex;
+    font-size: 20px;
+    padding-bottom: 40px;
+    animation: fadeIn 2s, moveIn 1.5s;
+}
+
+.card{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    background:linear-gradient(to bottom,rgb(11, 11, 11),rgb(27, 27, 27),rgb(32, 32, 32));
+    padding-top: 20px;
+    padding-bottom: 20px;
+    padding-right: 50px;
+    padding-left: 50px;
+    border-radius: 40px;
+    animation: fadeIn 2s, moveIn 1.5s;
+}
+
+.card-content{
+    color: white;
+    padding-top: 30px;
+    display:flex;
+    justify-content: center;
+    align-items: stretch;
+    flex-direction: column;
+}
+
+.card-content h1{
+    font-style: italic;
+    font-size: 30px;
+    margin-bottom:30px;
+    background:linear-gradient(to bottom,rgb(20, 20, 20),rgb(13, 13, 13));
+    padding: 15px;
+    border-radius: 50px;
+    margin-left: 200px;
+    margin-right: 200px;
+    padding-left: 20px;
+}
+
+.input{
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 5px;
+}
+
+.input label{
+    font-size: 30px;
+    padding-bottom: 10px;
+}
+
+#password-label{
+    padding-top: 30px;
+}
+
+.input input{
+    padding: 9px;
+    width: 600px;
+    font-size: 20px;
+    border-radius: 30px;
+    border:none;
+    border-width: 2px;
+    background: transparent;
+    color: white;
+}
+
+.submit-btn{
+    margin-top: 55px;
+    margin-bottom: 30px;
+    font-size:  20px;
+    padding: 15px;
+    border-radius: 30px;
+    background-color: rgb(55, 86, 223);
+    color:white;
+    border-color: rgb(55, 86, 223);
+    transition: all 0.3s ease;
+}
+
+.submit-btn:hover{
+    background-color: rgb(39, 65, 184);
+    border-color: rgb(39, 65, 184);
+    transform: scale(1.05);
+    box-shadow: 0px 7px 7px rgb(19, 19, 19);
+    transform: translateY(-3px);
+}
+
+.icon-text{
+    display: flex;
+    margin-top: 15px;
+}
+
+.icon-search-1{
+    background-color: white;
+    border-radius: 30px;   
+    margin-right: 10px;
+}
+
+.icon-search-2{
+    background-color: white;
+    border-radius: 30px;   
+    padding: 5px;
+    margin-right: 10px;
+}
+
+.navigation{
+    display: flex;
+    font-size: 17px;
+}
+
+.navigation a{
+    margin-left: 5px;
+    color: rgb(55, 86, 223);
+    text-decoration: none;
+}
+
+.navigation p{
+    margin-left: 200px;
+}
