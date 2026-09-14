@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        // Immediately kick unauthenticated users back to signup.html
+        if (!localStorage.getItem("user_email")) {
+            window.location.href = "signin.html";
+        }
+    </script>
+    <title>Document</title>
+</head>
+<body>
+    <h1>U DID IT!! 😭😭</h1>
+</body>
+</html>
