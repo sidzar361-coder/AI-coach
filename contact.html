@@ -138,6 +138,7 @@
         <aside class="sidebar">
             <div class="brand">
                 <h2>InterviewAI</h2>
+                <img src="logo.png" alt="InterviewAI Logo" class="header-logo">
             </div>
 
             <div class="pane">
@@ -217,7 +218,7 @@
         // Initialize EmailJS with your Public Key
         (function() {
             // REPLACE WITH YOUR EMAILJS PUBLIC KEY
-            emailjs.init("YOUR_PUBLIC_KEY");
+            emailjs.init("vqmHCDQq1xek_K3Mi");
         })();
 
         // Preloader Animation and Fetch Supabase Profile for Sidebar
@@ -269,7 +270,6 @@
             }
         }
 
-
         // Logout helper function
         function logout() {
             // Clear user session from storage
@@ -292,8 +292,8 @@
             formStatus.innerText = "";
 
             // REPLACE THESE WITH YOUR SERVICE_ID AND TEMPLATE_ID FROM EMAILJS
-            const serviceID = "YOUR_SERVICE_ID";
-            const templateID = "YOUR_TEMPLATE_ID";
+            const serviceID = "service_6k9qopc";
+            const templateID = "template_n2dii9v";
 
             emailjs.sendForm(serviceID, templateID, this)
                 .then(() => {

@@ -119,10 +119,23 @@
     justify-content: space-between;
 }
 
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 30px;
+}
+
 .brand h2 {
     font-size: 1.5rem;
     color: #818cf8;
-    margin-bottom: 30px;
+    margin-bottom: 0;
+}
+
+.header-logo {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
 }
 
 .pane h3 {
@@ -163,6 +176,12 @@
     padding: 6px 12px;
     border-radius: 6px;
     cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-logout:hover {
+    background: #ef4444;
+    color: white;
 }
 
 /* Main Area */

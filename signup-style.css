@@ -48,9 +48,11 @@
     z-index: 1;
 }
 
-.header #icon{
-    font-size:35px;
-    padding-left: 10px;
+
+.header-logo {
+    width: 60px; /* Adjust height/width as needed */
+    height: 60px;
+    object-fit: contain;
 }
 
 .header{

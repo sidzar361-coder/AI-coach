@@ -161,6 +161,23 @@
     margin-right: 10px;
     flex-shrink: 0;
 }
+
+.header {
+    color: white;
+    display: flex;
+    align-items: center; /* Vertically aligns logo and text */
+    /* Adds clean spacing between elements */
+    font-size: 20px;
+    padding-bottom: 40px;
+    animation: fadeIn 2s, moveIn 1.5s;
+}
+
+.header-logo {
+    width: 90px; /* Adjust height/width as needed */
+    height: 90px;
+    object-fit: contain;
+}
+
 .navigation{
     display: flex;
     font-size: 17px;
