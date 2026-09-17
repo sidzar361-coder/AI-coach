@@ -6,8 +6,8 @@
     <title>Contact Support | AI Interview Coach</title>
     <link rel="stylesheet" href="style.css">
     
-    <!-- EmailJS SDK -->
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <!-- EmailJS SDK (Updated to v4 to match your init syntax) -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     
     <style>
         /* Specific contact form overrides matching dashboard cards */
@@ -215,15 +215,15 @@
 
         let currentUserEmail = localStorage.getItem("user_email") || "";
 
-        // Initialize EmailJS with your Public Key
+        // Initialize EmailJS with your Public Key (v4 syntax)
         (function() {
-            // REPLACE WITH YOUR EMAILJS PUBLIC KEY
-            emailjs.init("vqmHCDQq1xek_K3Mi");
+            emailjs.init({
+                publicKey: "vqmHCDQq1xek_K3Mi"
+            });
         })();
 
         // Preloader Animation and Fetch Supabase Profile for Sidebar
         window.addEventListener('load', () => {
-            // 1. Fetch user data solely for the sidebar profile pane
             if (currentUserEmail) {
                 fetchSidebarUserData(currentUserEmail);
             } else {
@@ -231,10 +231,9 @@
                 document.getElementById("user-email-display").innerText = "Not logged in";
             }
 
-            // 2. Preloader vertical staircase animation timing
             setTimeout(() => {
                 const preloader = document.getElementById('preloader');
-                preloader.classList.add('active'); // Triggers vertical stair opening
+                preloader.classList.add('active'); 
 
                 setTimeout(() => {
                     document.querySelector('.container').classList.add('animate-bg');
@@ -244,7 +243,6 @@
             }, 1200);
         });
 
-        // Fetch user data from Supabase specifically for sidebar display (no form autofill)
         async function fetchSidebarUserData(email) {
             try {
                 const response = await fetch(`${SUPABASE_URL}?Email_ID=eq.${encodeURIComponent(email)}`, {
@@ -260,7 +258,6 @@
                     const data = await response.json();
                     if (data.length > 0) {
                         const user = data[0];
-                        // Update only the left sidebar elements
                         document.getElementById("username").innerText = `${user.First_Name || ''} ${user.Last_Name || ''}`.trim() || 'User';
                         document.getElementById("user-email-display").innerText = user.Email_ID;
                     }
@@ -270,12 +267,8 @@
             }
         }
 
-        // Logout helper function
         function logout() {
-            // Clear user session from storage
             localStorage.removeItem("user_email");
-            
-            // Redirect user to the sign-in page
             window.location.href = "signin.html";
         }
 
@@ -291,7 +284,6 @@
             submitBtn.innerText = "Sending...";
             formStatus.innerText = "";
 
-            // REPLACE THESE WITH YOUR SERVICE_ID AND TEMPLATE_ID FROM EMAILJS
             const serviceID = "service_6k9qopc";
             const templateID = "template_4rkfxat";
 
