@@ -154,13 +154,13 @@
     margin-right: 10px;
 }
 
-.icon-search-2{
+.icon-search-2 {
     background-color: white;
-    border-radius: 30px;   
-    padding: 5px;
+    border-radius: 50%;   
+    padding: 6px;
     margin-right: 10px;
+    flex-shrink: 0;
 }
-
 .navigation{
     display: flex;
     font-size: 17px;

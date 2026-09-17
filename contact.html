@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Support | AI Interview Coach</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- EmailJS SDK -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    
+    <style>
+        /* Specific contact form overrides matching dashboard cards */
+        .contact-card {
+            max-width: 600px;
+            margin: 40px auto;
+            width: 100%;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #c7d2fe;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            color: #ffffff;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input::placeholder,
+        .form-group textarea::placeholder {
+            color: #64748b;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            border-color: #818cf8;
+            box-shadow: 0 0 10px rgba(129, 140, 248, 0.3);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            background: #6366f1;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-submit:hover {
+            background: #4f46e5;
+            box-shadow: 0 6px 20px rgba(79, 70, 229, 0.6);
+        }
+
+        .btn-submit:disabled {
+            background: #475569;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .back-home-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #818cf8;
+            text-decoration: none;
+            font-weight: 500;
+            margin-bottom: 20px;
+            transition: color 0.2s;
+        }
+
+        .back-home-link:hover {
+            color: #c7d2fe;
+        }
+
+        /* Status message indicator */
+        #form-status {
+            margin-top: 15px;
+            text-align: center;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Vertical Double Staircase Preloader -->
+    <div id="preloader" class="skiper-preloader">
+        <div class="loader-content">
+            <h2>InterviewAI Support</h2>
+            <p>Loading contact portal...</p>
+        </div>
+        <div class="skiper-overlay-left">
+            <div class="stair-step"></div>
+            <div class="stair-step"></div>
+            <div class="stair-step"></div>
+            <div class="stair-step"></div>
+            <div class="stair-step"></div>
+        </div>
+        <div class="skiper-overlay-right">
+            <div class="stair-step"></div>
+            <div class="stair-step"></div>
+            <div class="stair-step"></div>
+            <div class="stair-step"></div>
+            <div class="stair-step"></div>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+        
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="brand">
+                <h2>InterviewAI</h2>
+            </div>
+
+            <div class="pane">
+                <h3>Navigation</h3>
+                <ul class="rounds-list">
+                    <li onclick="window.location.href='home.html'">🏠 Home</li>
+                    <li class="active">📩 Support & Contact</li>
+                </ul>
+            </div>
+
+            <!-- Profile summary near logout section (populated via Supabase) -->
+            <div class="user-profile-summary">
+                <p id="username">Candidate</p>
+                <small id="user-email-display" style="color: #94a3b8; display: block;">Loading session...</small>
+                <button class="btn-logout" onclick="logout()">Logout</button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            
+            <!-- Navbar -->
+            <nav class="navbar">
+                <a href="home.html" class="back-home-link">← Back to Home</a>
+                <div class="nav-links">
+                    <a href="home.html">Home</a>
+                    <a href="contact.html" style="color: #818cf8;">Contact Support</a>
+                </div>
+            </nav>
+
+            <!-- Contact Form Card -->
+            <div class="card contact-card">
+                <h3>Get in Touch</h3>
+                <p style="color: #94a3b8; margin-bottom: 25px; font-size: 0.95rem;">
+                    Having an issue or need help with your interview sessions? Send us a message and we will respond via Gmail shortly.
+                </p>
+
+                <!-- Clean, non-autofilled form -->
+                <form id="contact-form" autocomplete="off">
+                    
+                    <div class="form-group">
+                        <label for="name">Full Name</label>
+                        <input type="text" id="name" name="from_name" placeholder="John Doe" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone">Phone Number</label>
+                        <input type="tel" id="phone" name="phone_number" placeholder="+1 (555) 000-0000" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" name="reply_to" placeholder="candidate@example.com" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="problem">Describe the issue you are facing</label>
+                        <textarea id="problem" name="message" placeholder="Please describe the technical issue, bug, or question you have..." required></textarea>
+                    </div>
+
+                    <button type="submit" id="submit-btn" class="btn-submit">Submit Form</button>
+                    <div id="form-status"></div>
+
+                </form>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        // Supabase Configuration
+        const SUPABASE_URL = "https://fvgwubrhxlpwyoqkbakm.supabase.co/rest/v1/Signup_Data";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ2Z3d1YnJoeGxwd3lvcWtiYWttIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkzNjUyMzAsImV4cCI6MjEwNDk0MTIzMH0.pFQl2ZDwJSj-Vjsp-jvUFCEDmDAmWEWg0Sar_-jTdn8";
+
+        let currentUserEmail = localStorage.getItem("user_email") || "";
+
+        // Initialize EmailJS with your Public Key
+        (function() {
+            // REPLACE WITH YOUR EMAILJS PUBLIC KEY
+            emailjs.init("YOUR_PUBLIC_KEY");
+        })();
+
+        // Preloader Animation and Fetch Supabase Profile for Sidebar
+        window.addEventListener('load', () => {
+            // 1. Fetch user data solely for the sidebar profile pane
+            if (currentUserEmail) {
+                fetchSidebarUserData(currentUserEmail);
+            } else {
+                document.getElementById("username").innerText = "Candidate";
+                document.getElementById("user-email-display").innerText = "Not logged in";
+            }
+
+            // 2. Preloader vertical staircase animation timing
+            setTimeout(() => {
+                const preloader = document.getElementById('preloader');
+                preloader.classList.add('active'); // Triggers vertical stair opening
+
+                setTimeout(() => {
+                    document.querySelector('.container').classList.add('animate-bg');
+                    preloader.style.display = 'none';
+                }, 2100);
+
+            }, 1200);
+        });
+
+        // Fetch user data from Supabase specifically for sidebar display (no form autofill)
+        async function fetchSidebarUserData(email) {
+            try {
+                const response = await fetch(`${SUPABASE_URL}?Email_ID=eq.${encodeURIComponent(email)}`, {
+                    method: 'GET',
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.length > 0) {
+                        const user = data[0];
+                        // Update only the left sidebar elements
+                        document.getElementById("username").innerText = `${user.First_Name || ''} ${user.Last_Name || ''}`.trim() || 'User';
+                        document.getElementById("user-email-display").innerText = user.Email_ID;
+                    }
+                }
+            } catch (err) {
+                console.error("Error fetching user data for sidebar:", err);
+            }
+        }
+
+
+        // Logout helper function
+        function logout() {
+            // Clear user session from storage
+            localStorage.removeItem("user_email");
+            
+            // Redirect user to the sign-in page
+            window.location.href = "signin.html";
+        }
+
+        // Form Submission Handling with EmailJS
+        const contactForm = document.getElementById('contact-form');
+        const submitBtn = document.getElementById('submit-btn');
+        const formStatus = document.getElementById('form-status');
+
+        contactForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Sending...";
+            formStatus.innerText = "";
+
+            // REPLACE THESE WITH YOUR SERVICE_ID AND TEMPLATE_ID FROM EMAILJS
+            const serviceID = "YOUR_SERVICE_ID";
+            const templateID = "YOUR_TEMPLATE_ID";
+
+            emailjs.sendForm(serviceID, templateID, this)
+                .then(() => {
+                    submitBtn.innerText = "Submitted!";
+                    formStatus.style.color = "#10b981";
+                    formStatus.innerText = "✓ Message sent successfully! We will get back to you via Gmail.";
+                    contactForm.reset();
+                    
+                    setTimeout(() => {
+                        submitBtn.disabled = false;
+                        submitBtn.innerText = "Submit Form";
+                    }, 4000);
+                }, (error) => {
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = "Submit Form";
+                    formStatus.style.color = "#ef4444";
+                    formStatus.innerText = "❌ Failed to send message. Please try again.";
+                    console.error("EmailJS Error:", error);
+                });
+        });
+    </script>
+</body>
+</html>

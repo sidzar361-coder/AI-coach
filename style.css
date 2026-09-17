@@ -1,0 +1,325 @@
+@keyframes fadeBg {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+* {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Base Container Background Effect */
+.container {
+    width: 100%;
+    height: 100vh;
+    position: relative;
+    display: flex;
+    background: radial-gradient(circle, rgb(0, 0, 0), rgb(11, 6, 46), rgb(16, 8, 69));
+    overflow: hidden;
+    color: #ffffff;
+}
+
+.container::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle, rgb(16, 8, 69), rgb(11, 6, 46), rgb(0, 0, 0));
+    z-index: 0;
+    opacity: 0; /* Starts hidden until triggered by JS */
+}
+
+/* Background animation triggered AFTER preloader finishes */
+.container.animate-bg::before {
+    animation: fadeBg 3s ease-in-out forwards;
+}
+
+.container > * {
+    position: relative;
+    z-index: 1;
+}
+
+/* ========================================================
+   Vertical Double Staircase Preloader Animation (Slower)
+======================================================== */
+.skiper-preloader {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.loader-content {
+    position: absolute;
+    z-index: 10000;
+    text-align: center;
+    color: #ffffff;
+    transition: opacity 0.5s ease;
+}
+
+/* Top and Bottom overlay containers */
+.skiper-overlay-left, .skiper-overlay-right {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 50%;
+    display: flex;
+    flex-direction: row; /* Horizontal arrangement for vertical movement */
+    z-index: 9999;
+}
+
+.skiper-overlay-left { top: 0; }
+.skiper-overlay-right { bottom: 0; }
+
+.stair-step {
+    flex: 1;
+    background: #000000;
+    height: 100%;
+    /* Slower 1.5s vertical transition */
+    transition: transform 1.5s cubic-bezier(0.77, 0, 0.175, 1);
+}
+
+/* Trigger classes for Vertical movement (Up and Down) */
+.skiper-preloader.active .loader-content {
+    opacity: 0;
+}
+
+/* Top stairs move UP */
+.skiper-preloader.active .skiper-overlay-left .stair-step {
+    transform: translateY(-100%);
+}
+
+/* Bottom stairs move DOWN */
+.skiper-preloader.active .skiper-overlay-right .stair-step {
+    transform: translateY(100%);
+}
+
+/* Slower staggered delays */
+.stair-step:nth-child(1) { transition-delay: 0.1s; }
+.stair-step:nth-child(2) { transition-delay: 0.2s; }
+.stair-step:nth-child(3) { transition-delay: 0.3s; }
+.stair-step:nth-child(4) { transition-delay: 0.4s; }
+.stair-step:nth-child(5) { transition-delay: 0.5s; }
+
+/* ========================================================
+   Sidebar & Layout Styling
+======================================================== */
+.sidebar {
+    width: 280px;
+    background: rgba(15, 10, 45, 0.65);
+    backdrop-filter: blur(12px);
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    justify-content: space-between;
+}
+
+.brand h2 {
+    font-size: 1.5rem;
+    color: #818cf8;
+    margin-bottom: 30px;
+}
+
+.pane h3 {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #94a3b8;
+    margin-bottom: 15px;
+}
+
+.rounds-list { list-style: none; }
+
+.rounds-list li {
+    padding: 12px 15px;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.03);
+    transition: all 0.3s ease;
+}
+
+.rounds-list li:hover, .rounds-list li.active {
+    background: #4f46e5;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+}
+
+.user-profile-summary {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 15px;
+}
+
+.btn-logout {
+    margin-top: 10px;
+    background: transparent;
+    border: 1px solid #ef4444;
+    color: #ef4444;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+/* Main Area */
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 30px;
+    overflow-y: auto;
+}
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.nav-links a {
+    color: #cbd5e1;
+    text-decoration: none;
+    margin-left: 20px;
+    transition: color 0.2s;
+}
+
+.nav-links a:hover { color: #818cf8; }
+
+.view-panel { display: none; }
+.view-panel.active { display: block; }
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(8px);
+    padding: 20px;
+    border-radius: 12px;
+}
+
+.card h3 {
+    margin-bottom: 15px;
+    color: #c7d2fe;
+}
+
+.stat-number {
+    font-size: 2.2rem;
+    font-weight: bold;
+    color: #38bdf8;
+}
+
+.progress-bar-bg {
+    width: 100%;
+    height: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+    margin-top: 15px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: #38bdf8;
+    transition: width 0.5s ease;
+}
+
+.btn-primary, .btn-secondary {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    background: #6366f1;
+    color: white;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.btn-secondary { background: rgba(255, 255, 255, 0.1); }
+
+/* Interview Area */
+.interview-container {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 25px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.interview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ai-avatar-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 30px 0;
+}
+
+.ai-pulse-ring {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #818cf8, #4338ca);
+    box-shadow: 0 0 20px rgba(129, 140, 248, 0.6);
+    transition: transform 0.3s ease;
+}
+
+.ai-pulse-ring.speaking {
+    animation: pulse 1s infinite alternate;
+}
+
+@keyframes pulse {
+    from { transform: scale(1); box-shadow: 0 0 20px rgba(129, 140, 248, 0.6); }
+    to { transform: scale(1.25); box-shadow: 0 0 35px rgba(168, 85, 247, 0.9); }
+}
+
+.chat-display {
+    height: 180px;
+    overflow-y: auto;
+    background: rgba(0, 0, 0, 0.4);
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.chat-message { margin-bottom: 10px; line-height: 1.4; }
+.user-message { color: #38bdf8; }
+.ai-message { color: #a7f3d0; }
+
+.voice-controls {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.btn-speech {
+    flex: 1;
+    padding: 14px;
+    border-radius: 8px;
+    border: none;
+    background: #10b981;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    min-width: 150px;
+}
+
+.btn-speech.alt { background: #8b5cf6; }
+.btn-speech.save { background: #3b82f6; }
+
+.status-indicator {
+    margin-top: 10px;
+    font-size: 0.85rem;
+    color: #94a3b8;
+}

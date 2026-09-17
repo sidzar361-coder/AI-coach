@@ -3,15 +3,132 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script>
-        // Immediately kick unauthenticated users back to signup.html
-        if (!localStorage.getItem("user_email")) {
-            window.location.href = "signin.html";
-        }
-    </script>
-    <title>Document</title>
+    <title>InterviewAi</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>U DID IT!! 😭😭</h1>
+    <!-- Skiper10 Double Staircase Preloader -->
+    <div id="preloader" class="skiper-preloader">
+        <div class="skiper-overlay-left">
+            <div class="stair-step"></div>
+            <div class="stair-step"></div>
+            <div class="stair-step"></div>
+            <div class="stair-step"></div>
+            <div class="stair-step"></div>
+        </div>
+        <div class="skiper-overlay-right">
+            <div class="stair-step"></div>
+            <div class="stair-step"></div>
+            <div class="stair-step"></div>
+            <div class="stair-step"></div>
+            <div class="stair-step"></div>
+        </div>
+        <div class="loader-content">
+            <h2>InterviewAi</h2>
+            <p>Initializing practice session...</p>
+        </div>
+    </div>
+
+    <!-- Main Webpage Container -->
+    <div class="container">
+        <!-- Left Pane Sidebar -->
+        <aside class="sidebar">
+            <div class="brand">
+                <h2>InterviewAi</h2>
+            </div>
+            
+            <div class="pane">
+                <h3>Rounds</h3>
+                <ul class="rounds-list">
+                    <li class="active" onclick="switchTab('dashboard')">📊 Summary & Progress</li>
+                    <li onclick="startInterview('Technical Round')">💻 Technical Round</li>
+                    <li onclick="startInterview('Behavioral Round')">🤝 Behavioral Round</li>
+                    <li onclick="startInterview('System Design')">🏗️ System Design</li>
+                    <li onclick="startInterview('HR Round')">💼 HR & Culture Round</li>
+                </ul>
+            </div>
+
+            <div class="user-profile-summary">
+                <p id="user-email-display">Loading email...</p>
+                <button onclick="logout()" class="btn-logout">Logout</button>
+            </div>
+        </aside>
+
+        <!-- Main Body Content Section -->
+        <main class="main-content">
+            <!-- Header Navbar -->
+            <header class="navbar">
+                <div class="title">
+                    <h1 id="welcome-heading">Hello <span id="username">User</span></h1>
+                </div>
+                <nav class="nav-links">
+                    <a href="#" onclick="switchTab('dashboard')">Home</a>
+                    <a href="contact.html">Contact</a>
+                </nav>
+            </header>
+
+            <!-- Dashboard View -->
+            <section id="dashboard-view" class="view-panel active">
+                <div class="dashboard-grid">
+                    <!-- Progress Summary Card -->
+                    <div class="card summary-card">
+                        <h3>Progress Overview</h3>
+                        <div class="stats-row">
+                            <div class="stat-box">
+                                <span class="stat-number" id="progress-val">0%</span>
+                                <span class="stat-label">Overall Completion</span>
+                            </div>
+                        </div>
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill" id="progress-fill" style="width: 0%;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Work On / Feedback Card -->
+                    <div class="card feedback-card">
+                        <h3>Needs Improvement & Feedback</h3>
+                        <p id="progress-desc">Loading user feedback and areas to work on...</p>
+                    </div>
+
+                    <!-- Quick Start Practice Card -->
+                    <div class="card action-card">
+                        <h3>Practice with AI Coach</h3>
+                        <p>Talk to our AI Coach with full Speech-to-Text and Text-to-Speech integration.</p>
+                        <button class="btn-primary" onclick="startInterview('Technical Round')">Start Round</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Speech/Interview View (TTS & STT Integration) -->
+            <section id="interview-view" class="view-panel">
+                <div class="interview-container">
+                    <div class="interview-header">
+                        <h2 id="current-round-title">Technical Round</h2>
+                        <button class="btn-secondary" onclick="switchTab('dashboard')">← Back to Dashboard</button>
+                    </div>
+
+                    <div class="ai-avatar-box">
+                        <div class="ai-pulse-ring" id="ai-pulse"></div>
+                        <p id="ai-status">AI Interviewer Ready</p>
+                    </div>
+
+                    <div class="chat-display" id="chat-box">
+                        <div class="chat-message ai-message">
+                            <strong>AI Coach:</strong> Hello! Press "Speak Answer" to start talking or click "Play AI Voice" to test audio output.
+                        </div>
+                    </div>
+
+                    <div class="voice-controls">
+                        <button id="btn-listen" class="btn-speech">🎤 Speak Answer (STT)</button>
+                        <button id="btn-speak" class="btn-speech alt">🔊 Play AI Voice (TTS)</button>
+                        <button id="btn-save-progress" class="btn-speech save" onclick="saveSessionProgress()">💾 Save Progress to Supabase</button>
+                    </div>
+                    <p id="stt-status" class="status-indicator">Click "Speak Answer" and begin talking into your microphone.</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
 </body>
 </html>
