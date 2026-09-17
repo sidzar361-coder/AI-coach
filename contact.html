@@ -6,9 +6,6 @@
     <title>Contact Support | AI Interview Coach</title>
     <link rel="stylesheet" href="style.css">
     
-    <!-- EmailJS SDK (Updated to v4 to match your init syntax) -->
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-    
     <style>
         /* Specific contact form overrides matching dashboard cards */
         .contact-card {
@@ -176,8 +173,11 @@
                     Having an issue or need help with your interview sessions? Send us a message and we will respond via Gmail shortly.
                 </p>
 
-                <!-- Clean, non-autofilled form -->
+                <!-- Web3Forms Enabled Form -->
                 <form id="contact-form" autocomplete="off">
+                    
+                    <!-- Web3Forms Access Key -->
+                    <input type="hidden" name="access_key" value="c1670f48-c2f0-4c8d-892b-f279e2aaca36">
                     
                     <div class="form-group">
                         <label for="name">Full Name</label>
@@ -191,7 +191,7 @@
 
                     <div class="form-group">
                         <label for="email">Email Address</label>
-                        <input type="email" id="email" name="reply_to" placeholder="candidate@example.com" required>
+                        <input type="email" id="email" name="email" placeholder="candidate@example.com" required>
                     </div>
 
                     <div class="form-group">
@@ -214,13 +214,6 @@
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ2Z3d1YnJoeGxwd3lvcWtiYWttIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkzNjUyMzAsImV4cCI6MjEwNDk0MTIzMH0.pFQl2ZDwJSj-Vjsp-jvUFCEDmDAmWEWg0Sar_-jTdn8";
 
         let currentUserEmail = localStorage.getItem("user_email") || "";
-
-        // Initialize EmailJS with your Public Key (v4 syntax)
-        (function() {
-            emailjs.init({
-                publicKey: "vqmHCDQq1xek_K3Mi"
-            });
-        })();
 
         // Preloader Animation and Fetch Supabase Profile for Sidebar
         window.addEventListener('load', () => {
@@ -272,39 +265,58 @@
             window.location.href = "signin.html";
         }
 
-        // Form Submission Handling with EmailJS
+        // Form Submission Handling via Web3Forms API
         const contactForm = document.getElementById('contact-form');
         const submitBtn = document.getElementById('submit-btn');
         const formStatus = document.getElementById('form-status');
 
-        contactForm.addEventListener('submit', function(event) {
-            event.preventDefault();
+        contactForm.addEventListener('submit', function(e) {
+            e.preventDefault();
 
             submitBtn.disabled = true;
             submitBtn.innerText = "Sending...";
             formStatus.innerText = "";
 
-            const serviceID = "service_6k9qopc";
-            const templateID = "template_oobdtfp";
+            const formData = new FormData(contactForm);
+            const object = Object.fromEntries(formData);
+            const json = JSON.stringify(object);
 
-            emailjs.sendForm(serviceID, templateID, this)
-                .then(() => {
+            fetch('https://api.web3forms.com/submit', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: json
+            })
+            .then(async (response) => {
+                let jsonResponse = await response.json();
+                if (response.status === 200) {
                     submitBtn.innerText = "Submitted!";
                     formStatus.style.color = "#10b981";
                     formStatus.innerText = "✓ Message sent successfully! We will get back to you via Gmail.";
                     contactForm.reset();
-                    
-                    setTimeout(() => {
-                        submitBtn.disabled = false;
-                        submitBtn.innerText = "Submit Form";
-                    }, 4000);
-                }, (error) => {
+                } else {
+                    console.error(jsonResponse);
                     submitBtn.disabled = false;
                     submitBtn.innerText = "Submit Form";
                     formStatus.style.color = "#ef4444";
-                    formStatus.innerText = "❌ Failed to send message. Please try again.";
-                    console.error("EmailJS Error:", error);
-                });
+                    formStatus.innerText = jsonResponse.message || "❌ Failed to send message. Please try again.";
+                }
+            })
+            .catch(error => {
+                console.error("Web3Forms Error:", error);
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Submit Form";
+                formStatus.style.color = "#ef4444";
+                formStatus.innerText = "❌ Something went wrong! Please check your connection.";
+            })
+            .finally(() => {
+                setTimeout(() => {
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = "Submit Form";
+                }, 4000);
+            });
         });
     </script>
 </body>
