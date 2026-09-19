@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from fastapi import FastAPI, HTTPException, status
+from fastapi.middleware.cors import CORSMiddleware
 
 from .api_service import (
     QuestionNotFoundError,
@@ -23,6 +24,13 @@ from .schemas import (
 
 
 app = FastAPI(title="Quantumaze AI Interview Backend", version="1.0.0")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 repository = SessionRepository()
 session_service = SessionApiService(repository)
 question_generator = GeminiQuestionGenerator()

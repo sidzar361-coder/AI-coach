@@ -1,7 +1,13 @@
 const SUPABASE_URL = "https://fvgwubrhxlpwyoqkbakm.supabase.co/rest/v1/Signup_Data";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ2Z3d1YnJoeGxwd3lvcWtiYWttIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkzNjUyMzAsImV4cCI6MjEwNDk0MTIzMH0.pFQl2ZDwJSj-Vjsp-jvUFCEDmDAmWEWg0Sar_-jTdn8";
 
+const API_BASE_URL = window.AI_COACH_API_URL || "https://interviewai-backend-m02b.onrender.com";
 let currentUserEmail = localStorage.getItem("user_email") || "";
+let interviewSession = null;
+let currentQuestion = null;
+let latestScore = 0;
+let recognition = null;
+let isListening = false;
 
 window.addEventListener('load', () => {
     // 1. Fetch user information from Supabase
@@ -48,8 +54,9 @@ async function fetchUserData(email) {
                 const progressVal = user.Progress !== undefined ? user.Progress : 0;
                 const progressDesc = user.Progress_Description || "No practice feedback recorded yet.";
 
-                document.getElementById("progress-val").innerText = `${progressVal}%`;
-                document.getElementById("progress-fill").style.width = `${progressVal}%`;
+                latestScore = Number(progressVal) || 0;
+                document.getElementById("progress-val").innerText = `${latestScore}/100`;
+                document.getElementById("progress-fill").style.width = `${Math.max(0, Math.min(100, latestScore))}%`;
                 document.getElementById("progress-desc").innerText = progressDesc;
 
                 // Handle loading and displaying saved role from database
@@ -72,8 +79,8 @@ async function saveSessionProgress() {
         return;
     }
 
-    const newProgress = 50;
-    const newDesc = "Completed Technical Round. Excellent articulation, but need to work on system design scalability.";
+    const newProgress = latestScore;
+    const newDesc = document.getElementById("progress-desc").innerText;
 
     try {
         const response = await fetch(`${SUPABASE_URL}?Email_ID=eq.${encodeURIComponent(currentUserEmail)}`, {
@@ -91,7 +98,7 @@ async function saveSessionProgress() {
         });
 
         if (response.ok) {
-            alert("Progress saved to Supabase!");
+            alert("AI score and improvement feedback saved to Supabase!");
             fetchUserData(currentUserEmail);
         } else {
             alert("Failed to save progress.");
@@ -112,22 +119,144 @@ function switchTab(tabName) {
     }
 }
 
-function startInterview(roundName) {
+async function startInterview(roundName) {
     document.getElementById('current-round-title').innerText = roundName;
     switchTab('interview');
-    
-    const greeting = `Welcome to the ${roundName}. Please begin when ready.`;
-    addChatMessage("AI Coach", greeting);
-    speakText(greeting);
+    setInterviewStatus("Connecting to the AI interviewer...");
+    try {
+        await ensureInterviewSession();
+        const question = await getNextQuestion();
+        const greeting = `Welcome to the ${roundName}.`;
+        addChatMessage("AI Coach", `${greeting} ${question.text}`);
+        speakText(`${greeting} ${question.text}`);
+    } catch (error) {
+        setInterviewStatus(error.message);
+        addChatMessage("AI Coach", error.message);
+    }
 }
 
 function addChatMessage(sender, text) {
     const chatBox = document.getElementById('chat-box');
     const msg = document.createElement('div');
     msg.className = `chat-message ${sender === 'AI Coach' ? 'ai-message' : 'user-message'}`;
-    msg.innerHTML = `<strong>${sender}:</strong> ${text}`;
+    const label = document.createElement('strong');
+    label.textContent = `${sender}:`;
+    msg.append(label, document.createTextNode(` ${text}`));
     chatBox.appendChild(msg);
     chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+function setInterviewStatus(message) {
+    document.getElementById('stt-status').innerText = message;
+    document.getElementById('ai-status').innerText = message;
+}
+
+async function apiRequest(path, options = {}) {
+    const response = await fetch(`${API_BASE_URL}${path}`, {
+        ...options,
+        headers: { 'Content-Type': 'application/json', ...(options.headers || {}) }
+    });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(body.detail || `AI service returned ${response.status}.`);
+    return body;
+}
+
+function getCandidateId() {
+    let candidateId = localStorage.getItem('ai_coach_candidate_id');
+    if (!candidateId) {
+        candidateId = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        localStorage.setItem('ai_coach_candidate_id', candidateId);
+    }
+    return candidateId;
+}
+
+async function ensureInterviewSession() {
+    const storedId = localStorage.getItem('ai_coach_session_id');
+    if (storedId) {
+        try {
+            interviewSession = await apiRequest(`/session/${storedId}`);
+            return interviewSession;
+        } catch (error) {
+            localStorage.removeItem('ai_coach_session_id');
+        }
+    }
+    const response = await apiRequest('/session', {
+        method: 'POST',
+        body: JSON.stringify({ candidate_id: getCandidateId() })
+    });
+    interviewSession = response.session;
+    localStorage.setItem('ai_coach_session_id', response.session_id);
+    return interviewSession;
+}
+
+async function getNextQuestion() {
+    const response = await apiRequest(`/session/${interviewSession.session_id}/question`);
+    currentQuestion = response.question;
+    interviewSession = await apiRequest(`/session/${interviewSession.session_id}`);
+    return currentQuestion;
+}
+
+function renderEvaluation(evaluation) {
+    latestScore = Math.round(evaluation.score);
+    const strengths = evaluation.strengths?.length ? evaluation.strengths.join('; ') : 'Keep building clear, structured answers.';
+    const weaknesses = evaluation.weaknesses?.length ? evaluation.weaknesses.join('; ') : 'No major gaps identified for this answer.';
+    const topics = evaluation.recommended_topics?.length ? ` Recommended practice: ${evaluation.recommended_topics.join(', ')}.` : '';
+    const description = `${evaluation.feedback} Strengths: ${strengths} Areas to improve: ${weaknesses}.${topics}`;
+    document.getElementById('progress-val').innerText = `${latestScore}/100`;
+    document.getElementById('progress-fill').style.width = `${latestScore}%`;
+    document.getElementById('progress-desc').innerText = description;
+    document.getElementById('ai-improvements').innerText = `Improve next: ${weaknesses}`;
+}
+
+async function submitTranscript(transcript) {
+    if (!currentQuestion || !interviewSession) throw new Error('Start a round before submitting an answer.');
+    setInterviewStatus('Sending your answer to the AI evaluator...');
+    const response = await apiRequest(`/session/${interviewSession.session_id}/answer`, {
+        method: 'POST',
+        body: JSON.stringify({
+            question_id: currentQuestion.id,
+            question: currentQuestion.text,
+            answer: transcript,
+            session_version: interviewSession.version
+        })
+    });
+    interviewSession = response.session;
+    renderEvaluation(response.evaluation);
+    const reply = `Score ${Math.round(response.evaluation.score)} out of 100. ${response.evaluation.feedback}`;
+    addChatMessage('AI Coach', reply);
+    speakText(reply);
+    setInterviewStatus('AI feedback is ready. Start another round or continue practising.');
+    await persistAiProgress();
+    if (interviewSession.status !== 'completed') {
+        try {
+            const nextQuestion = await getNextQuestion();
+            addChatMessage('AI Coach', nextQuestion.text);
+            speakText(nextQuestion.text);
+        } catch (error) {
+            currentQuestion = null;
+            setInterviewStatus(error.message);
+        }
+    } else {
+        currentQuestion = null;
+    }
+}
+
+async function persistAiProgress() {
+    if (!currentUserEmail || !latestScore) return;
+    const response = await fetch(`${SUPABASE_URL}?Email_ID=eq.${encodeURIComponent(currentUserEmail)}`, {
+        method: 'PATCH',
+        headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify({
+            Progress: latestScore,
+            Progress_Description: document.getElementById('progress-desc').innerText
+        })
+    });
+    if (!response.ok) console.warn('Could not persist AI score to Supabase.');
 }
 
 /* TTS & STT Functions */
@@ -145,42 +274,56 @@ function speakText(text) {
 }
 
 document.getElementById('btn-speak').addEventListener('click', () => {
-    const question = "How do you handle database index optimization for high-throughput reads?";
-    addChatMessage("AI Coach", question);
-    speakText(question);
+    if (currentQuestion) speakText(currentQuestion.text);
+    else setInterviewStatus('Start a round to generate an AI question.');
 });
 
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
 if (SpeechRecognition) {
-    const recognition = new SpeechRecognition();
+    recognition = new SpeechRecognition();
     recognition.lang = 'en-US';
+    recognition.continuous = false;
+    recognition.interimResults = true;
 
     const listenBtn = document.getElementById('btn-listen');
     const statusText = document.getElementById('stt-status');
 
     listenBtn.addEventListener('click', () => {
+        if (isListening) {
+            recognition.stop();
+            return;
+        }
+        if (!currentQuestion) {
+            setInterviewStatus('Start a round to generate an AI question.');
+            return;
+        }
         recognition.start();
+        isListening = true;
         statusText.innerText = "Listening... Speak now.";
         listenBtn.style.background = "#ef4444";
     });
 
     recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        addChatMessage("You", transcript);
-        statusText.innerText = "Speech recognized.";
-        listenBtn.style.background = "#10b981";
-        
-        setTimeout(() => {
-            const reply = "Great response. Let's move forward.";
-            addChatMessage("AI Coach", reply);
-            speakText(reply);
-        }, 1000);
+        const transcript = Array.from(event.results).map(result => result[0].transcript).join(' ').trim();
+        if (event.results[event.results.length - 1].isFinal && transcript) {
+            addChatMessage("You", transcript);
+            submitTranscript(transcript).catch(error => setInterviewStatus(error.message));
+        }
     };
 
     recognition.onend = () => {
+        isListening = false;
         listenBtn.style.background = "#10b981";
     };
+    recognition.onerror = (event) => {
+        isListening = false;
+        listenBtn.style.background = "#10b981";
+        setInterviewStatus(`Speech recognition error: ${event.error}`);
+    };
+} else {
+    document.getElementById('btn-listen').disabled = true;
+    setInterviewStatus('Speech recognition is not supported in this browser.');
 }
 
 // ==========================================

@@ -76,8 +76,8 @@
                         <h3>Progress Overview</h3>
                         <div class="stats-row">
                             <div class="stat-box">
-                                <span class="stat-number" id="progress-val">0%</span>
-                                <span class="stat-label">Overall Completion</span>
+                                <span class="stat-number" id="progress-val">0/100</span>
+                                <span class="stat-label">Latest AI Score</span>
                             </div>
                         </div>
                         <div class="progress-bar-bg">
@@ -87,8 +87,9 @@
 
                     <!-- Work On / Feedback Card -->
                     <div class="card feedback-card">
-                        <h3>Needs Improvement & Feedback</h3>
+                        <h3>AI Improvements & Feedback</h3>
                         <p id="progress-desc">Loading user feedback and areas to work on...</p>
+                        <div id="ai-improvements" class="ai-improvements"></div>
                     </div>
 
                     <!-- Quick Start Practice Card -->
@@ -223,7 +224,7 @@
 
                     <div class="chat-display" id="chat-box">
                         <div class="chat-message ai-message">
-                            <strong>AI Coach:</strong> Hello! Press "Speak Answer" to start talking or click "Play AI Voice" to test audio output.
+                            <strong>AI Coach:</strong> Start a round to receive an AI-generated question.
                         </div>
                     </div>
 
