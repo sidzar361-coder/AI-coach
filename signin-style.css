@@ -9,9 +9,9 @@
     }
 }
 
-/* Target exclusively Chrome / Chromium-based engines */
+/* Target exclusively Chrome / Chromium-based engines for the container */
 @media screen and (-webkit-min-device-pixel-ratio: 0) {
-    body {
+    .container {
         zoom: 75%;
     }
 }
