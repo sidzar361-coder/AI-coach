@@ -9,8 +9,9 @@ let latestScore = 0;
 let recognition = null;
 let isListening = false;
 let pendingTranscript = '';
+let interimTranscript = '';
 let completedQuestionCount = 0;
-let lastProcessedResultIndex = 0;
+let processedFinalResults = new Set();
 let recognitionRunning = false;
 let submitRequested = false;
 
@@ -239,7 +240,8 @@ function resetInterviewForRetry() {
     latestScore = 0;
     completedQuestionCount = 0;
     pendingTranscript = '';
-    lastProcessedResultIndex = 0;
+    interimTranscript = '';
+    processedFinalResults.clear();
     recognitionRunning = false;
     submitRequested = false;
     setListenButton('Speak Answer (STT)', false);
@@ -367,8 +369,10 @@ function setListenButton(label, recording) {
 }
 
 function submitPendingTranscript() {
-    const transcript = pendingTranscript.trim();
+    const transcript = `${pendingTranscript} ${interimTranscript}`.trim();
     pendingTranscript = '';
+    interimTranscript = '';
+    processedFinalResults.clear();
     submitRequested = false;
     isListening = false;
     setListenButton('Speak Answer (STT)', false);
@@ -407,26 +411,30 @@ if (SpeechRecognition) {
         recognitionRunning = true;
         submitRequested = false;
         pendingTranscript = '';
-        lastProcessedResultIndex = 0;
+        interimTranscript = '';
+        processedFinalResults.clear();
         statusText.innerText = "Listening... speak your answer, then click Submit Answer.";
         setListenButton('Submit Answer', true);
     });
 
     recognition.onresult = (event) => {
-        const finalText = Array.from(event.results)
-            .slice(lastProcessedResultIndex)
-            .filter(result => result.isFinal)
-            .map(result => result[0].transcript)
-            .join(' ')
-            .trim();
-        lastProcessedResultIndex = event.results.length;
-        if (finalText) pendingTranscript = `${pendingTranscript} ${finalText}`.trim();
+        interimTranscript = '';
+        for (let index = 0; index < event.results.length; index += 1) {
+            const result = event.results[index];
+            const text = result[0].transcript.trim();
+            if (result.isFinal && !processedFinalResults.has(index)) {
+                pendingTranscript = `${pendingTranscript} ${text}`.trim();
+                processedFinalResults.add(index);
+            } else if (!result.isFinal) {
+                interimTranscript = `${interimTranscript} ${text}`.trim();
+            }
+        }
     };
 
     recognition.onend = () => {
         recognitionRunning = false;
         if (submitRequested) {
-            submitPendingTranscript();
+            window.setTimeout(submitPendingTranscript, 250);
         } else if (isListening) {
             setInterviewStatus('Listening... continue speaking when ready, then click Submit Answer.');
             window.setTimeout(() => {
@@ -434,6 +442,8 @@ if (SpeechRecognition) {
                 try {
                     recognition.start();
                     recognitionRunning = true;
+                    processedFinalResults.clear();
+                    interimTranscript = '';
                 } catch (error) {
                     setInterviewStatus('Recording paused by the browser. Click Submit Answer when finished.');
                 }
