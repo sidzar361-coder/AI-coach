@@ -11,7 +11,10 @@
 
 /* Target exclusively Chrome / Chromium-based engines for the container */
 @media screen and (-webkit-min-device-pixel-ratio: 0) {
-    .container {
+    .header {
+        zoom: 75%;
+    }
+    .card {
         zoom: 75%;
     }
 }
