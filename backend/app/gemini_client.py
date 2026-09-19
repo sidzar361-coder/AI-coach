@@ -2,7 +2,7 @@ import os
 from typing import Protocol
 
 
-GEMINI_MODEL = "gemini-3.6-flash"
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 
 
 class GeminiClient(Protocol):
@@ -22,8 +22,13 @@ class GoogleGeminiClient:
 
         client = genai.Client(api_key=self.api_key)
         try:
-            response = client.interactions.create(model=self.model, input=prompt)
+            response = client.models.generate_content(
+                model=self.model,
+                contents=prompt,
+            )
             return response.output_text
+        except Exception as error:
+            raise RuntimeError(f"Gemini request failed: {error}") from error
         finally:
             close = getattr(client, "close", None)
             if close is not None:
