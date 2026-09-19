@@ -74,16 +74,22 @@ class CandidateProfile(BaseModel):
 
     def completed_background_fields(self) -> set[BackgroundField]:
         fields: set[BackgroundField] = set()
+
         if self.cgpa is not None:
             fields.add(BackgroundField.CGPA)
+
         if self.projects:
             fields.add(BackgroundField.PROJECTS)
+
             if all(project.role for project in self.projects):
                 fields.add(BackgroundField.PROJECT_ROLES)
+
             if all(project.technologies for project in self.projects):
                 fields.add(BackgroundField.TECHNOLOGIES)
+
         if self.experience is not None:
             fields.add(BackgroundField.EXPERIENCE)
+
         return fields
 
 
@@ -93,34 +99,9 @@ class ProfileFact(BaseModel):
     field: BackgroundField
     value: str = Field(min_length=1)
     source_question_id: Optional[UUID] = None
-    recorded_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-
-
-class Evaluation(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    id: UUID = Field(default_factory=uuid4)
-    score: float = Field(ge=0, le=100)
-    strengths: list[str] = Field(default_factory=list)
-    weaknesses: list[str] = Field(default_factory=list)
-    feedback: str = ""
-    recommended_difficulty: Optional[Difficulty] = None
-    recommended_topics: list[str] = Field(default_factory=list)
-
-
-class FinalReport(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    candidate_profile: CandidateProfile
-    round_scores: dict[str, Optional[float]] = Field(default_factory=dict)
-    overall_score: Optional[float] = Field(default=None, ge=0, le=100)
-    strengths: list[str] = Field(default_factory=list)
-    weaknesses: list[str] = Field(default_factory=list)
-    recommendations: list[str] = Field(default_factory=list)
-    recommended_topics: list[str] = Field(default_factory=list)
-    difficulty_progression: list[Difficulty] = Field(default_factory=list)
-    round_performance: list[dict[str, object]] = Field(default_factory=list)
-    question_performance: list[dict[str, object]] = Field(default_factory=list)
+    recorded_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
 
 
 class InterviewQuestion(BaseModel):
@@ -134,7 +115,9 @@ class InterviewQuestion(BaseModel):
     difficulty: Difficulty
     context_references: list[str] = Field(default_factory=list)
     answered: bool = False
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
 
 
 class CandidateAnswer(BaseModel):
@@ -145,7 +128,21 @@ class CandidateAnswer(BaseModel):
     round_number: RoundNumber
     text: str = Field(min_length=1)
     evaluation_id: Optional[UUID] = None
-    submitted_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    submitted_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
+
+
+class Evaluation(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: UUID = Field(default_factory=uuid4)
+    score: float = Field(ge=0, le=100)
+    strengths: list[str] = Field(default_factory=list)
+    weaknesses: list[str] = Field(default_factory=list)
+    feedback: str = ""
+    recommended_difficulty: Optional[Difficulty] = None
+    recommended_topics: list[str] = Field(default_factory=list)
 
 
 class RoundState(BaseModel):
@@ -163,39 +160,83 @@ class RoundState(BaseModel):
     completed_at: Optional[datetime] = None
 
 
+class FinalReport(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    candidate_profile: CandidateProfile
+    round_scores: dict[str, Optional[float]] = Field(default_factory=dict)
+    overall_score: Optional[float] = Field(
+        default=None,
+        ge=0,
+        le=100,
+    )
+    strengths: list[str] = Field(default_factory=list)
+    weaknesses: list[str] = Field(default_factory=list)
+    recommendations: list[str] = Field(default_factory=list)
+    recommended_topics: list[str] = Field(default_factory=list)
+    difficulty_progression: list[Difficulty] = Field(default_factory=list)
+    round_performance: list[dict[str, object]] = Field(default_factory=list)
+    question_performance: list[dict[str, object]] = Field(default_factory=list)
+
+
 class InterviewSession(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     id: UUID = Field(default_factory=uuid4)
     candidate_id: UUID
+
     status: SessionStatus = SessionStatus.IN_PROGRESS
+
     current_round: RoundNumber = RoundNumber.BACKGROUND
     current_stage: str = "candidate_background"
     current_difficulty: Difficulty = Difficulty.MEDIUM
-    candidate_profile: CandidateProfile = Field(default_factory=CandidateProfile)
+
+    candidate_profile: CandidateProfile = Field(
+        default_factory=CandidateProfile
+    )
+
     profile_facts: list[ProfileFact] = Field(default_factory=list)
+
     round_history: list[RoundState] = Field(
         default_factory=lambda: [
             RoundState(round_number=round_number)
             for round_number in RoundNumber
         ]
     )
+
     questions: list[InterviewQuestion] = Field(default_factory=list)
     answers: list[CandidateAnswer] = Field(default_factory=list)
     evaluations: list[Evaluation] = Field(default_factory=list)
+
     recommended_topics: list[str] = Field(default_factory=list)
-    difficulty_progression: list[Difficulty] = Field(default_factory=list)
-    final_report: Optional[FinalReport] = None
-    round_scores: dict[str, Optional[float]] = Field(
-        default_factory=lambda: {str(round_number.value): None for round_number in RoundNumber}
+
+    difficulty_progression: list[Difficulty] = Field(
+        default_factory=list
     )
+
+    final_report: Optional[FinalReport] = None
+
+    round_scores: dict[str, Optional[float]] = Field(
+        default_factory=lambda: {
+            str(round_number.value): None
+            for round_number in RoundNumber
+        }
+    )
+
     version: int = 0
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
+
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
 
     def round_state(self, round_number: RoundNumber) -> RoundState:
         return next(
-            state for state in self.round_history
+            state
+            for state in self.round_history
             if state.round_number == round_number
         )
 
