@@ -11,6 +11,8 @@ let isListening = false;
 let pendingTranscript = '';
 let completedQuestionCount = 0;
 let lastProcessedResultIndex = 0;
+let recognitionRunning = false;
+let submitRequested = false;
 
 window.addEventListener('load', () => {
     // 1. Fetch user information from Supabase
@@ -238,6 +240,9 @@ function resetInterviewForRetry() {
     completedQuestionCount = 0;
     pendingTranscript = '';
     lastProcessedResultIndex = 0;
+    recognitionRunning = false;
+    submitRequested = false;
+    setListenButton('Speak Answer (STT)', false);
     localStorage.removeItem('ai_coach_session_id');
     document.getElementById('progress-val').innerText = '0/100';
     document.getElementById('progress-fill').style.width = '0%';
@@ -268,6 +273,7 @@ async function submitTranscript(transcript) {
     const sessionId = getSessionId();
     if (!sessionId) throw new Error('Interview session ID is missing. Please start the round again.');
     setInterviewStatus('Sending your answer to the AI evaluator...');
+    setListenButton('Speak Answer (STT)', false);
     const response = await apiRequest(`/session/${sessionId}/answer`, {
         method: 'POST',
         body: JSON.stringify({
@@ -354,6 +360,26 @@ document.getElementById('btn-speak').addEventListener('click', () => {
 
 document.getElementById('btn-retry-interview').addEventListener('click', resetInterviewForRetry);
 
+function setListenButton(label, recording) {
+    const listenBtn = document.getElementById('btn-listen');
+    listenBtn.innerText = recording ? '⏹ Submit Answer' : `🎤 ${label}`;
+    listenBtn.style.background = recording ? '#ef4444' : '#10b981';
+}
+
+function submitPendingTranscript() {
+    const transcript = pendingTranscript.trim();
+    pendingTranscript = '';
+    submitRequested = false;
+    isListening = false;
+    setListenButton('Speak Answer (STT)', false);
+    if (!transcript) {
+        setInterviewStatus('No speech was captured. Click Speak Answer and try again.');
+        return;
+    }
+    addChatMessage('You', transcript);
+    submitTranscript(transcript).catch(error => setInterviewStatus(error.message));
+}
+
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
 if (SpeechRecognition) {
@@ -367,14 +393,9 @@ if (SpeechRecognition) {
 
     listenBtn.addEventListener('click', () => {
         if (isListening) {
-            recognition.stop();
-            isListening = false;
-            if (pendingTranscript.trim()) {
-                const transcript = pendingTranscript.trim();
-                pendingTranscript = '';
-                addChatMessage("You", transcript);
-                submitTranscript(transcript).catch(error => setInterviewStatus(error.message));
-            }
+            submitRequested = true;
+            if (recognitionRunning) recognition.stop();
+            else submitPendingTranscript();
             return;
         }
         if (!currentQuestion) {
@@ -383,9 +404,12 @@ if (SpeechRecognition) {
         }
         recognition.start();
         isListening = true;
+        recognitionRunning = true;
+        submitRequested = false;
+        pendingTranscript = '';
         lastProcessedResultIndex = 0;
-        statusText.innerText = "Listening... Speak now.";
-        listenBtn.style.background = "#ef4444";
+        statusText.innerText = "Listening... speak your answer, then click Submit Answer.";
+        setListenButton('Submit Answer', true);
     });
 
     recognition.onresult = (event) => {
@@ -400,16 +424,27 @@ if (SpeechRecognition) {
     };
 
     recognition.onend = () => {
-        listenBtn.style.background = "#10b981";
-        if (isListening) {
-            setInterviewStatus('Paused. Still listening; continue speaking or press the button to submit.');
-            lastProcessedResultIndex = 0;
-            try { recognition.start(); } catch (error) { /* The browser is already restarting. */ }
+        recognitionRunning = false;
+        if (submitRequested) {
+            submitPendingTranscript();
+        } else if (isListening) {
+            setInterviewStatus('Listening... continue speaking when ready, then click Submit Answer.');
+            window.setTimeout(() => {
+                if (!isListening || submitRequested || recognitionRunning) return;
+                try {
+                    recognition.start();
+                    recognitionRunning = true;
+                } catch (error) {
+                    setInterviewStatus('Recording paused by the browser. Click Submit Answer when finished.');
+                }
+            }, 250);
         }
     };
     recognition.onerror = (event) => {
+        recognitionRunning = false;
         isListening = false;
-        listenBtn.style.background = "#10b981";
+        submitRequested = false;
+        setListenButton('Speak Answer (STT)', false);
         setInterviewStatus(`Speech recognition error: ${event.error}`);
     };
 } else {
