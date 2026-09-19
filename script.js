@@ -157,7 +157,14 @@ async function apiRequest(path, options = {}) {
         headers: { 'Content-Type': 'application/json', ...(options.headers || {}) }
     });
     const body = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(body.detail || `AI service returned ${response.status}.`);
+    if (!response.ok) {
+        const detail = typeof body.detail === 'string'
+            ? body.detail
+            : body.detail
+                ? JSON.stringify(body.detail)
+                : `AI service returned ${response.status}.`;
+        throw new Error(detail);
+    }
     return body;
 }
 
