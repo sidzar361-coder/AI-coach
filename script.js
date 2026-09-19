@@ -239,7 +239,7 @@ function enableRoleChange() {
     document.getElementById('btn-edit-role').style.display = 'none';
     document.getElementById('selected-role-display').innerText = "";
     document.getElementById('role-search-input').value = "";
-    filterRoles(); // Reset filter view
+    filterRoles(); 
 }
 
 // Update the user's role field in Supabase database

@@ -42,10 +42,10 @@
                 <h3>Rounds</h3>
                 <ul class="rounds-list">
                     <li class="active" onclick="switchTab('dashboard')">📊 Summary & Progress</li>
-                    <li onclick="startInterview('Technical Round')">💻 Technical Round</li>
-                    <li onclick="startInterview('Behavioral Round')">🤝 Behavioral Round</li>
-                    <li onclick="startInterview('System Design')">🏗️ System Design</li>
-                    <li onclick="startInterview('HR Round')">💼 HR & Culture Round</li>
+                    <li id="round-aptitude" onclick="startInterview('Aptitude Round')">🧠 Aptitude Round</li>
+                    <li id="round-technical" onclick="startInterview('Technical Round')">💻 Technical Round</li>
+                    <li id="round-managerial" onclick="startInterview('Project / Managerial Round')">📋 Project / Managerial Round</li>
+                    <li id="round-hr" onclick="startInterview('HR / Behavioral')">🤝 HR / Behavioral</li>
                 </ul>
             </div>
 
@@ -95,7 +95,7 @@
                     <div class="card action-card">
                         <h3>Practice with AI Coach</h3>
                         <p>Talk to our AI Coach with full Speech-to-Text and Text-to-Speech integration.</p>
-                        <button class="btn-primary" onclick="startInterview('Technical Round')">Start Round</button>
+                        <button class="btn-primary" onclick="startInterview('Aptitude Round')">Start Round</button>
                     </div>
 
                     <!-- Professional Role Selection Card -->
