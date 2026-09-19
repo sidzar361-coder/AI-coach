@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Voice to Text</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px;
+        }
+
+        button {
+            padding: 15px 30px;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        #output {
+            margin-top: 30px;
+            padding: 20px;
+            border: 2px solid black;
+            min-height: 100px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>🎤 AI Interview Coach</h1>
+
+    <p>Click the button and speak your answer.</p>
+
+    <button id="startBtn">Start Speaking</button>
+
+    <div id="output">
+        Your answer will appear here...
+    </div>
+    <p id="wordCount">Word count: 0</p>
+    <p id="speakingTime">Speaking time: 0 seconds</p>
+    <p id="speakingSpeed">Speaking speed: 0 WPM</p>
+    <p id="fillerCount">Filler words: 0</p>
+    <p id="pauseCount">Pauses detected: 0</p>
+    <p id="communicationScore">Communication score: 0/100</p>
+    <p id="communicationLevel">Communication level will appear here.</p>
+    <p id="communicationFeedback">Communication feedback will appear here.</p>
+    <button id="submitBtn">Submit Answer</button>
+
+<p id="status"></p>
+
+
+    <script>
+let pauseCount = 0;
+let lastSpeechTime = 0;
+const startBtn = document.getElementById("startBtn");
+const output = document.getElementById("output");
+const submitBtn = document.getElementById("submitBtn");
+const status = document.getElementById("status");
+const speakingSpeedDisplay = document.getElementById("speakingSpeed");
+const fillerCountDisplay = document.getElementById("fillerCount");
+const communicationScoreDisplay = document.getElementById("communicationScore");
+const communicationLevelDisplay =
+    document.getElementById("communicationLevel");
+const communicationFeedback = document.getElementById("communicationFeedback");
+const pauseCountDisplay = document.getElementById("pauseCount");
+const speakingTimeDisplay = document.getElementById("speakingTime");
+
+        const SpeechRecognition =
+            window.SpeechRecognition ||
+            window.webkitSpeechRecognition;
+
+        if (!SpeechRecognition) {
+
+            output.innerText =
+                "Speech recognition is not supported in this browser.";
+
+        } else {
+            let transcript = "";
+
+            const recognition = new SpeechRecognition();
+
+            recognition.lang = "en-IN";
+            recognition.continuous = true;
+            recognition.interimResults = false;
+
+            startBtn.addEventListener("click", function () {
+                startTime = Date.now();
+                pauseCount = 0;
+                lastSpeechTime = Date.now();
+                recognition.start();
+                output.innerText = "🎤 Listening...";
+            });
+
+           recognition.onresult = function (event) {
+               transcript =
+                event.results[0][0].transcript;
+
+               speakingTime = (Date.now() - startTime) / 1000;
+               let currentSpeechTime = Date.now();
+
+            if (currentSpeechTime - lastSpeechTime > 2000) {
+                pauseCount++;
+}
+
+            lastSpeechTime = currentSpeechTime;
+
+               output.innerText = transcript;
+            };
+
+            recognition.onerror = function (event) {
+
+                output.innerText =
+                    "Error: " + event.error;
+
+            };
+            submitBtn.addEventListener("click", function () {
+
+    if (transcript === "") {
+        status.innerText = "⚠️ Please speak your answer first.";
+        return;
+    }
+
+    status.innerText = "📤 Sending answer...";
+
+    fetch("http://127.0.0.1:5000/answer", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            answer: transcript,
+            speaking_time: speakingTime,
+            pause_count: pauseCount
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log(data);
+
+        status.innerText = "✅ " + data.message;
+        wordCount.innerText = "Word count: " + data.word_count;
+        speakingSpeedDisplay.innerText = "Speaking speed: " + data.speaking_speed.toFixed(2) + " WPM";
+
+        fillerCountDisplay.innerText = "Filler words: " + data.filler_count;
+        communicationScoreDisplay.innerText =
+             "Communication score: " + data.communication_score + "/100";
+        communicationLevelDisplay.innerText =
+            "Communication level: " + data.communication_level;
+        communicationFeedback.innerText = data.communication_feedback;
+        speakingTimeDisplay.innerText = "Speaking time: " + data.speaking_time.toFixed(2) + " seconds";
+        pauseCountDisplay.innerText =
+             "Pauses detected: " + data.pause_count;
+
+    })
+    .catch(error => {
+
+        status.innerText = "❌ Could not connect to backend.";
+
+    });
+
+});
+
+        }
+
+    </script>
+
+</body>
+</html>
