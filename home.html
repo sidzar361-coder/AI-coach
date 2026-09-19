@@ -92,6 +92,13 @@
                         <ul id="ai-improvements" class="ai-improvements"></ul>
                     </div>
 
+                    <div id="final-summary-card" class="card feedback-card" style="display: none;">
+                        <h3>Interview Summary</h3>
+                        <p id="final-summary-text"></p>
+                        <ul id="final-summary-improvements" class="ai-improvements"></ul>
+                        <button id="btn-retry-interview" class="btn-primary" type="button">Try Again</button>
+                    </div>
+
                     <!-- Quick Start Practice Card -->
                     <div class="card action-card">
                         <h3>Practice with AI Coach</h3>
@@ -231,6 +238,7 @@
                     <div class="voice-controls">
                         <button id="btn-listen" class="btn-speech">🎤 Speak Answer (STT)</button>
                         <button id="btn-speak" class="btn-speech alt">🔊 Play AI Voice (TTS)</button>
+                        <select id="voice-select" class="btn-speech alt" aria-label="AI voice"></select>
                     </div>
                     <p id="stt-status" class="status-indicator">Click "Speak Answer" and begin talking into your microphone.</p>
                 </div>

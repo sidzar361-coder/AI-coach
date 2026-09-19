@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from .models import CandidateAnswer, InterviewQuestion, InterviewSession
+from .models import CandidateAnswer, InterviewQuestion, InterviewSession, RoundNumber
 from .answer_service import AnswerEvaluator
 from .question_service import QuestionGenerator
 from .repository import SessionRepository
@@ -94,7 +94,7 @@ class SessionApiService:
         record_evaluation(session, answer.id, evaluation)
         if is_round_complete(session):
             complete_current_round(session)
-            if session.current_round.value == 5:
+            if session.current_round == RoundNumber.FINAL_EVALUATION:
                 session.final_report = generate_final_report(session)
                 complete_final_evaluation(session, session.final_report.overall_score)
                 session.final_report = generate_final_report(session)

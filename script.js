@@ -8,6 +8,9 @@ let currentQuestion = null;
 let latestScore = 0;
 let recognition = null;
 let isListening = false;
+let pendingTranscript = '';
+let completedQuestionCount = 0;
+let lastProcessedResultIndex = 0;
 
 window.addEventListener('load', () => {
     // 1. Fetch user information from Supabase
@@ -90,7 +93,10 @@ async function startInterview(roundName) {
     try {
         await ensureInterviewSession();
         const question = await getNextQuestion();
-        const greeting = `Welcome to the ${roundName}.`;
+        completedQuestionCount = interviewSession.previous_questions?.filter(
+            question => question.round_number === interviewSession.current_round && question.answered
+        ).length || 0;
+        const greeting = `Welcome to the ${roundName}. Question ${completedQuestionCount + 1} of 7.`;
         addChatMessage("AI Coach", `${greeting} ${question.text}`);
         speakText(`${greeting} ${question.text}`);
     } catch (error) {
@@ -170,6 +176,13 @@ async function getNextQuestion() {
     const response = await apiRequest(`/session/${sessionId}/question`);
     currentQuestion = response.question;
     interviewSession = await apiRequest(`/session/${sessionId}`);
+    const roundNames = {
+        1: 'Background Round',
+        2: 'Project Deep-Dive Round',
+        3: 'Technical Knowledge Round',
+        4: 'Problem-Solving Round'
+    };
+    document.getElementById('current-round-title').innerText = roundNames[interviewSession.current_round] || 'Interview Round';
     return currentQuestion;
 }
 
@@ -195,6 +208,61 @@ function renderEvaluation(evaluation) {
     });
 }
 
+function renderFinalReport(report) {
+    const score = report.overall_score == null ? 0 : Math.round(report.overall_score);
+    latestScore = score;
+    document.getElementById('progress-val').innerText = `${score}/100`;
+    document.getElementById('progress-fill').style.width = `${score}%`;
+    document.getElementById('progress-desc').innerText = 'All interview rounds are complete. Your final AI summary is ready.';
+    const dashboardImprovements = document.getElementById('ai-improvements');
+    dashboardImprovements.replaceChildren();
+
+    const summary = document.getElementById('final-summary-card');
+    document.getElementById('final-summary-text').innerText = `Overall score: ${score}/100. ${report.strengths?.length ? `Strongest areas: ${report.strengths.join('; ')}.` : ''}`;
+    const improvements = document.getElementById('final-summary-improvements');
+    improvements.replaceChildren();
+    const items = report.weaknesses?.length ? report.weaknesses : (report.recommendations || []);
+    items.slice(0, 5).forEach(text => {
+        const item = document.createElement('li');
+        item.textContent = text;
+        improvements.appendChild(item);
+        dashboardImprovements.appendChild(item.cloneNode(true));
+    });
+    summary.style.display = 'block';
+}
+
+function resetInterviewForRetry() {
+    interviewSession = null;
+    currentQuestion = null;
+    latestScore = 0;
+    completedQuestionCount = 0;
+    pendingTranscript = '';
+    lastProcessedResultIndex = 0;
+    localStorage.removeItem('ai_coach_session_id');
+    document.getElementById('progress-val').innerText = '0/100';
+    document.getElementById('progress-fill').style.width = '0%';
+    document.getElementById('progress-desc').innerText = 'No completed interview yet.';
+    document.getElementById('ai-improvements').replaceChildren();
+    document.getElementById('final-summary-card').style.display = 'none';
+    document.getElementById('chat-box').innerHTML = '<div class="chat-message ai-message"><strong>AI Coach:</strong> Start a round to receive an AI-generated question.</div>';
+    resetStoredProgress();
+    switchTab('dashboard');
+}
+
+async function resetStoredProgress() {
+    if (!currentUserEmail) return;
+    await fetch(`${SUPABASE_URL}?Email_ID=eq.${encodeURIComponent(currentUserEmail)}`, {
+        method: 'PATCH',
+        headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify({ Progress: 0, Progress_Description: 'A new interview attempt is ready.' })
+    });
+}
+
 async function submitTranscript(transcript) {
     if (!currentQuestion || !interviewSession) throw new Error('Start a round before submitting an answer.');
     const sessionId = getSessionId();
@@ -216,11 +284,20 @@ async function submitTranscript(transcript) {
     speakText(reply);
     setInterviewStatus('AI feedback is ready. Start another round or continue practising.');
     await persistAiProgress();
-    if (interviewSession.status !== 'completed') {
+    if (interviewSession.final_report) {
+        renderFinalReport(interviewSession.final_report);
+        await persistAiProgress();
+        switchTab('dashboard');
+        speakText('All interview rounds are complete. Your summary is ready on the dashboard.');
+    } else if (interviewSession.status !== 'completed') {
         try {
             const nextQuestion = await getNextQuestion();
-            addChatMessage('AI Coach', nextQuestion.text);
-            speakText(nextQuestion.text);
+            completedQuestionCount = interviewSession.previous_questions?.filter(
+                question => question.round_number === interviewSession.current_round && question.answered
+            ).length || 0;
+            const nextText = `Question ${completedQuestionCount + 1} of 7. ${nextQuestion.text}`;
+            addChatMessage('AI Coach', nextText);
+            speakText(nextText);
         } catch (error) {
             currentQuestion = null;
             setInterviewStatus(error.message);
@@ -256,6 +333,11 @@ function speakText(text) {
     if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(text);
+        const voiceSelect = document.getElementById('voice-select');
+        const voices = window.speechSynthesis.getVoices();
+        if (voiceSelect && voices[voiceSelect.selectedIndex]) {
+            utterance.voice = voices[voiceSelect.selectedIndex];
+        }
         const pulse = document.getElementById('ai-pulse');
         
         utterance.onstart = () => pulse.classList.add('speaking');
@@ -270,12 +352,14 @@ document.getElementById('btn-speak').addEventListener('click', () => {
     else setInterviewStatus('Start a round to generate an AI question.');
 });
 
+document.getElementById('btn-retry-interview').addEventListener('click', resetInterviewForRetry);
+
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
 if (SpeechRecognition) {
     recognition = new SpeechRecognition();
     recognition.lang = 'en-US';
-    recognition.continuous = false;
+    recognition.continuous = true;
     recognition.interimResults = true;
 
     const listenBtn = document.getElementById('btn-listen');
@@ -284,6 +368,13 @@ if (SpeechRecognition) {
     listenBtn.addEventListener('click', () => {
         if (isListening) {
             recognition.stop();
+            isListening = false;
+            if (pendingTranscript.trim()) {
+                const transcript = pendingTranscript.trim();
+                pendingTranscript = '';
+                addChatMessage("You", transcript);
+                submitTranscript(transcript).catch(error => setInterviewStatus(error.message));
+            }
             return;
         }
         if (!currentQuestion) {
@@ -292,21 +383,29 @@ if (SpeechRecognition) {
         }
         recognition.start();
         isListening = true;
+        lastProcessedResultIndex = 0;
         statusText.innerText = "Listening... Speak now.";
         listenBtn.style.background = "#ef4444";
     });
 
     recognition.onresult = (event) => {
-        const transcript = Array.from(event.results).map(result => result[0].transcript).join(' ').trim();
-        if (event.results[event.results.length - 1].isFinal && transcript) {
-            addChatMessage("You", transcript);
-            submitTranscript(transcript).catch(error => setInterviewStatus(error.message));
-        }
+        const finalText = Array.from(event.results)
+            .slice(lastProcessedResultIndex)
+            .filter(result => result.isFinal)
+            .map(result => result[0].transcript)
+            .join(' ')
+            .trim();
+        lastProcessedResultIndex = event.results.length;
+        if (finalText) pendingTranscript = `${pendingTranscript} ${finalText}`.trim();
     };
 
     recognition.onend = () => {
-        isListening = false;
         listenBtn.style.background = "#10b981";
+        if (isListening) {
+            setInterviewStatus('Paused. Still listening; continue speaking or press the button to submit.');
+            lastProcessedResultIndex = 0;
+            try { recognition.start(); } catch (error) { /* The browser is already restarting. */ }
+        }
     };
     recognition.onerror = (event) => {
         isListening = false;
@@ -412,4 +511,21 @@ async function updateRoleInSupabase(roleName) {
 function logout() {
     localStorage.removeItem("user_email");
     window.location.href = "signin.html";
+}
+
+function populateVoices() {
+    const voiceSelect = document.getElementById('voice-select');
+    if (!voiceSelect || !('speechSynthesis' in window)) return;
+    const voices = window.speechSynthesis.getVoices();
+    voiceSelect.replaceChildren();
+    voices.forEach(voice => {
+        const option = document.createElement('option');
+        option.textContent = `${voice.name} (${voice.lang})`;
+        voiceSelect.appendChild(option);
+    });
+}
+
+if ('speechSynthesis' in window) {
+    populateVoices();
+    window.speechSynthesis.onvoiceschanged = populateVoices;
 }

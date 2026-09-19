@@ -16,8 +16,7 @@ from .models import (
 
 REQUIRED_BACKGROUND_FIELDS = frozenset(BackgroundField)
 
-MIN_EVALUATED_QUESTIONS = 3
-MAX_EVALUATED_QUESTIONS = 5
+QUESTIONS_PER_ROUND = 7
 ADAPTIVE_ROUNDS = frozenset(
     {
         RoundNumber.PROJECT_DEEP_DIVE,
@@ -139,23 +138,14 @@ def record_evaluation(
 def is_round_complete(session: InterviewSession) -> bool:
     state = session.round_state(session.current_round)
 
-    if session.current_round == RoundNumber.BACKGROUND:
-        profile_fields = session.candidate_profile.completed_background_fields()
-        return REQUIRED_BACKGROUND_FIELDS.issubset(
-            profile_fields | state.completed_background_fields
-        )
-
-    if session.current_round in ADAPTIVE_ROUNDS:
+    if session.current_round != RoundNumber.FINAL_EVALUATION:
         evaluated_count = sum(
             1
             for answer in session.answers
             if answer.round_number == session.current_round
             and answer.evaluation_id is not None
         )
-        topics_covered = state.required_topics.issubset(state.covered_topics)
-        return evaluated_count >= MIN_EVALUATED_QUESTIONS and (
-            evaluated_count >= MAX_EVALUATED_QUESTIONS or topics_covered
-        )
+        return evaluated_count >= QUESTIONS_PER_ROUND
 
     return False
 
