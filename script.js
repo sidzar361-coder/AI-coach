@@ -177,10 +177,10 @@ async function getNextQuestion() {
     currentQuestion = response.question;
     interviewSession = await apiRequest(`/session/${sessionId}`);
     const roundNames = {
-        1: 'Background Round',
+        1: 'Aptitude Round',
         2: 'Project Deep-Dive Round',
         3: 'Technical Knowledge Round',
-        4: 'Problem-Solving Round'
+        4: 'Problem-Solving / Behavioral Round'
     };
     document.getElementById('current-round-title').innerText = roundNames[interviewSession.current_round] || 'Interview Round';
     return currentQuestion;

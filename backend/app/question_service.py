@@ -18,7 +18,7 @@ class QuestionGenerator(Protocol):
 
 
 QUESTION_TYPES = {
-    RoundNumber.BACKGROUND: QuestionType.BACKGROUND,
+    RoundNumber.BACKGROUND: QuestionType.PRACTICAL_REASONING,
     RoundNumber.PROJECT_DEEP_DIVE: QuestionType.PROJECT_DEEP_DIVE,
     RoundNumber.TECHNICAL_KNOWLEDGE: QuestionType.TECHNICAL,
     RoundNumber.PROBLEM_SOLVING: QuestionType.PRACTICAL_REASONING,
@@ -74,10 +74,26 @@ def parse_and_validate(raw_response: str) -> GeminiQuestionResponse:
 
 def build_question_prompt(session: InterviewSession) -> str:
     instructions = {
-        RoundNumber.BACKGROUND: "Ask about CGPA, projects, project roles, technologies, or experience. Treat answers as factual profile data.",
-        RoundNumber.PROJECT_DEEP_DIVE: "Ask a project-specific deep-dive question using actual projects, roles, technologies, and Round 1 answers.",
-        RoundNumber.TECHNICAL_KNOWLEDGE: "Ask a role-specific technical question using complete persisted history and performance.",
-        RoundNumber.PROBLEM_SOLVING: "Ask a coding, DSA, debugging, or practical reasoning question appropriate for the candidate.",
+        RoundNumber.BACKGROUND: (
+            "This is the Aptitude Round. Ask one aptitude question involving quantitative reasoning, "
+            "logical reasoning, verbal reasoning, patterns, percentages, probability, data interpretation, "
+            "or problem-solving under time pressure. Do not ask about programming, frameworks, databases, "
+            "system design, projects, work experience, or technical implementation."
+        ),
+        RoundNumber.PROJECT_DEEP_DIVE: (
+            "This is the Project and Managerial Round. Ask one question about the candidate's project "
+            "decisions, ownership, teamwork, prioritization, leadership, trade-offs, delivery, or project impact. "
+            "Use the candidate's actual project history. Do not ask generic coding or database questions."
+        ),
+        RoundNumber.TECHNICAL_KNOWLEDGE: (
+            "This is the Technical Round. Ask one role-specific technical question about programming, "
+            "data structures, APIs, databases, networking, cloud, system design, or the technologies in the profile."
+        ),
+        RoundNumber.PROBLEM_SOLVING: (
+            "This is the Problem-Solving and Behavioral Round. Ask one practical scenario, debugging, "
+            "decision-making, communication, conflict, adaptability, or structured reasoning question. "
+            "Do not repeat a pure technical theory question."
+        ),
     }
     return _prompt_header(session, instructions[session.current_round])
 
@@ -93,7 +109,7 @@ def build_correction_prompt(session: InterviewSession, invalid_response: str, er
 
 def _prompt_header(session: InterviewSession, instruction: str = "") -> str:
     return (
-        "You are a professional Quantumaze interviewer.\n"
+        "You are a professional Quantumaze interviewer conducting a structured interview.\n"
         "Return ONLY raw JSON with exactly these keys: question, topic, round, difficulty.\n"
         "Do NOT use Markdown code fences, ```json fences, or any other triple-backtick wrapper.\n"
         f"Expected round: {session.current_round.value}; expected difficulty: {session.current_difficulty.value}\n"
@@ -104,7 +120,8 @@ def _prompt_header(session: InterviewSession, instruction: str = "") -> str:
         f"Evaluations: {[evaluation.model_dump() for evaluation in session.evaluations]}\n"
         f"Recommended topics: {session.recommended_topics}\n"
         f"Relevant round history: {[state.model_dump() for state in session.round_history]}\n"
-        "Do not repeat previous questions."
+        "Do not repeat previous questions. Ask exactly one question. "
+        "The round instruction is a hard constraint: never mix content from another round."
     )
 
 
