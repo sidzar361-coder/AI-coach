@@ -72,42 +72,6 @@ async function fetchUserData(email) {
     }
 }
 
-// Save progress to Supabase
-async function saveSessionProgress() {
-    if (!currentUserEmail) {
-        alert("User session not found!");
-        return;
-    }
-
-    const newProgress = latestScore;
-    const newDesc = document.getElementById("progress-desc").innerText;
-
-    try {
-        const response = await fetch(`${SUPABASE_URL}?Email_ID=eq.${encodeURIComponent(currentUserEmail)}`, {
-            method: 'PATCH',
-            headers: {
-                'apikey': SUPABASE_KEY,
-                'Authorization': `Bearer ${SUPABASE_KEY}`,
-                'Content-Type': 'application/json',
-                'Prefer': 'return=minimal'
-            },
-            body: JSON.stringify({
-                "Progress": newProgress,
-                "Progress_Description": newDesc
-            })
-        });
-
-        if (response.ok) {
-            alert("AI score and improvement feedback saved to Supabase!");
-            fetchUserData(currentUserEmail);
-        } else {
-            alert("Failed to save progress.");
-        }
-    } catch (err) {
-        console.error("Error saving progress:", err);
-    }
-}
-
 // UI Navigation
 function switchTab(tabName) {
     document.querySelectorAll('.view-panel').forEach(panel => panel.classList.remove('active'));
@@ -211,14 +175,24 @@ async function getNextQuestion() {
 
 function renderEvaluation(evaluation) {
     latestScore = Math.round(evaluation.score);
-    const strengths = evaluation.strengths?.length ? evaluation.strengths.join('; ') : 'Keep building clear, structured answers.';
-    const weaknesses = evaluation.weaknesses?.length ? evaluation.weaknesses.join('; ') : 'No major gaps identified for this answer.';
-    const topics = evaluation.recommended_topics?.length ? ` Recommended practice: ${evaluation.recommended_topics.join(', ')}.` : '';
-    const description = `${evaluation.feedback} Strengths: ${strengths} Areas to improve: ${weaknesses}.${topics}`;
+    const strengths = evaluation.strengths?.length ? evaluation.strengths : ['Keep building clear, structured answers.'];
+    const weaknesses = evaluation.weaknesses?.length ? evaluation.weaknesses : ['No major gaps identified for this answer.'];
+    const topics = evaluation.recommended_topics?.length ? evaluation.recommended_topics : [];
     document.getElementById('progress-val').innerText = `${latestScore}/100`;
     document.getElementById('progress-fill').style.width = `${latestScore}%`;
-    document.getElementById('progress-desc').innerText = description;
-    document.getElementById('ai-improvements').innerText = `Improve next: ${weaknesses}`;
+    document.getElementById('progress-desc').innerText = evaluation.feedback || 'AI feedback is ready.';
+
+    const improvements = document.getElementById('ai-improvements');
+    improvements.replaceChildren();
+    [
+        `Strengths: ${strengths.join('; ')}`,
+        `Focus next: ${weaknesses.join('; ')}`,
+        ...(topics.length ? [`Practice next: ${topics.join(', ')}`] : [])
+    ].forEach(summary => {
+        const item = document.createElement('li');
+        item.textContent = summary;
+        improvements.appendChild(item);
+    });
 }
 
 async function submitTranscript(transcript) {
@@ -257,7 +231,7 @@ async function submitTranscript(transcript) {
 }
 
 async function persistAiProgress() {
-    if (!currentUserEmail || !latestScore) return;
+    if (!currentUserEmail) return;
     const response = await fetch(`${SUPABASE_URL}?Email_ID=eq.${encodeURIComponent(currentUserEmail)}`, {
         method: 'PATCH',
         headers: {
@@ -268,7 +242,10 @@ async function persistAiProgress() {
         },
         body: JSON.stringify({
             Progress: latestScore,
-            Progress_Description: document.getElementById('progress-desc').innerText
+            Progress_Description: [
+                document.getElementById('progress-desc').innerText,
+                ...Array.from(document.querySelectorAll('#ai-improvements li')).map(item => item.innerText)
+            ].join(' ')
         })
     });
     if (!response.ok) console.warn('Could not persist AI score to Supabase.');
