@@ -97,6 +97,110 @@
                         <p>Talk to our AI Coach with full Speech-to-Text and Text-to-Speech integration.</p>
                         <button class="btn-primary" onclick="startInterview('Technical Round')">Start Round</button>
                     </div>
+
+                    <!-- Professional Role Selection Card -->
+                    <div class="card role-card">
+                        <h3>Select Your Professional Role</h3>
+                        <p>Choose your current role or search from the list below:</p>
+                        
+                        <!-- Search Bar -->
+                        <div class="role-search-container">
+                            <input type="text" id="role-search-input" class="role-search-input" placeholder="Search roles..." onkeyup="filterRoles()">
+                        </div>
+
+                        <!-- Scrollable Dropdown Box / List -->
+                        <div id="role-dropdown-container" class="role-dropdown-scrollable">
+                            <div class="role-option" onclick="selectRole('Software Engineer')">Software Engineer</div>
+                            <div class="role-option" onclick="selectRole('Software Developer')">Software Developer</div>
+                            <div class="role-option" onclick="selectRole('Frontend Developer')">Frontend Developer</div>
+                            <div class="role-option" onclick="selectRole('Backend Developer')">Backend Developer</div>
+                            <div class="role-option" onclick="selectRole('Full-Stack Developer')">Full-Stack Developer</div>
+                            <div class="role-option" onclick="selectRole('Web Developer')">Web Developer</div>
+                            <div class="role-option" onclick="selectRole('Mobile App Developer')">Mobile App Developer</div>
+                            <div class="role-option" onclick="selectRole('Application Developer')">Application Developer</div>
+                            <div class="role-option" onclick="selectRole('Game Developer')">Game Developer</div>
+                            <div class="role-option" onclick="selectRole('DevOps Engineer')">DevOps Engineer</div>
+                            <div class="role-option" onclick="selectRole('Site Reliability Engineer (SRE)')">Site Reliability Engineer (SRE)</div>
+                            <div class="role-option" onclick="selectRole('AI Engineer')">AI Engineer</div>
+                            <div class="role-option" onclick="selectRole('Machine Learning Engineer')">Machine Learning Engineer</div>
+                            <div class="role-option" onclick="selectRole('Data Scientist')">Data Scientist</div>
+                            <div class="role-option" onclick="selectRole('Data Analyst')">Data Analyst</div>
+                            <div class="role-option" onclick="selectRole('Data Engineer')">Data Engineer</div>
+                            <div class="role-option" onclick="selectRole('AI/ML Researcher')">AI/ML Researcher</div>
+                            <div class="role-option" onclick="selectRole('Generative AI Engineer')">Generative AI Engineer</div>
+                            <div class="role-option" onclick="selectRole('NLP Engineer')">NLP Engineer</div>
+                            <div class="role-option" onclick="selectRole('Computer Vision Engineer')">Computer Vision Engineer</div>
+                            <div class="role-option" onclick="selectRole('MLOps Engineer')">MLOps Engineer</div>
+                            <div class="role-option" onclick="selectRole('Cloud Engineer')">Cloud Engineer</div>
+                            <div class="role-option" onclick="selectRole('Cloud Architect')">Cloud Architect</div>
+                            <div class="role-option" onclick="selectRole('Solutions Architect')">Solutions Architect</div>
+                            <div class="role-option" onclick="selectRole('Systems Engineer')">Systems Engineer</div>
+                            <div class="role-option" onclick="selectRole('Systems Administrator')">Systems Administrator</div>
+                            <div class="role-option" onclick="selectRole('Network Engineer')">Network Engineer</div>
+                            <div class="role-option" onclick="selectRole('Infrastructure Engineer')">Infrastructure Engineer</div>
+                            <div class="role-option" onclick="selectRole('Platform Engineer')">Platform Engineer</div>
+                            <div class="role-option" onclick="selectRole('Cybersecurity Analyst')">Cybersecurity Analyst</div>
+                            <div class="role-option" onclick="selectRole('Security Engineer')">Security Engineer</div>
+                            <div class="role-option" onclick="selectRole('Security Architect')">Security Architect</div>
+                            <div class="role-option" onclick="selectRole('Penetration Tester / Ethical Hacker')">Penetration Tester / Ethical Hacker</div>
+                            <div class="role-option" onclick="selectRole('SOC Analyst')">SOC Analyst</div>
+                            <div class="role-option" onclick="selectRole('Cloud Security Engineer')">Cloud Security Engineer</div>
+                            <div class="role-option" onclick="selectRole('Incident Response Analyst')">Incident Response Analyst</div>
+                            <div class="role-option" onclick="selectRole('Digital Forensics Analyst')">Digital Forensics Analyst</div>
+                            <div class="role-option" onclick="selectRole('Database Administrator (DBA)')">Database Administrator (DBA)</div>
+                            <div class="role-option" onclick="selectRole('Database Engineer')">Database Engineer</div>
+                            <div class="role-option" onclick="selectRole('Data Architect')">Data Architect</div>
+                            <div class="role-option" onclick="selectRole('ERP Consultant')">ERP Consultant</div>
+                            <div class="role-option" onclick="selectRole('SAP Consultant')">SAP Consultant</div>
+                            <div class="role-option" onclick="selectRole('Salesforce Developer')">Salesforce Developer</div>
+                            <div class="role-option" onclick="selectRole('Salesforce Administrator')">Salesforce Administrator</div>
+                            <div class="role-option" onclick="selectRole('QA Engineer')">QA Engineer</div>
+                            <div class="role-option" onclick="selectRole('Software Tester')">Software Tester</div>
+                            <div class="role-option" onclick="selectRole('Automation Test Engineer')">Automation Test Engineer</div>
+                            <div class="role-option" onclick="selectRole('Performance Test Engineer')">Performance Test Engineer</div>
+                            <div class="role-option" onclick="selectRole('SDET')">SDET</div>
+                            <div class="role-option" onclick="selectRole('Product Manager')">Product Manager</div>
+                            <div class="role-option" onclick="selectRole('Technical Product Manager')">Technical Product Manager</div>
+                            <div class="role-option" onclick="selectRole('Project Manager')">Project Manager</div>
+                            <div class="role-option" onclick="selectRole('Program Manager')">Program Manager</div>
+                            <div class="role-option" onclick="selectRole('Business Analyst')">Business Analyst</div>
+                            <div class="role-option" onclick="selectRole('Technical Business Analyst')">Technical Business Analyst</div>
+                            <div class="role-option" onclick="selectRole('IT Consultant')">IT Consultant</div>
+                            <div class="role-option" onclick="selectRole('Scrum Master')">Scrum Master</div>
+                            <div class="role-option" onclick="selectRole('Engineering Manager')">Engineering Manager</div>
+                            <div class="role-option" onclick="selectRole('CTO')">CTO</div>
+                            <div class="role-option" onclick="selectRole('UI Designer')">UI Designer</div>
+                            <div class="role-option" onclick="selectRole('UX Designer')">UX Designer</div>
+                            <div class="role-option" onclick="selectRole('UI/UX Designer')">UI/UX Designer</div>
+                            <div class="role-option" onclick="selectRole('Product Designer')">Product Designer</div>
+                            <div class="role-option" onclick="selectRole('UX Researcher')">UX Researcher</div>
+                            <div class="role-option" onclick="selectRole('Design Systems Designer')">Design Systems Designer</div>
+                            <div class="role-option" onclick="selectRole('IT Support Specialist')">IT Support Specialist</div>
+                            <div class="role-option" onclick="selectRole('Help Desk Technician')">Help Desk Technician</div>
+                            <div class="role-option" onclick="selectRole('IT Administrator')">IT Administrator</div>
+                            <div class="role-option" onclick="selectRole('IT Operations Engineer')">IT Operations Engineer</div>
+                            <div class="role-option" onclick="selectRole('Technical Support Engineer')">Technical Support Engineer</div>
+                            <div class="role-option" onclick="selectRole('Application Support Engineer')">Application Support Engineer</div>
+                            <div class="role-option" onclick="selectRole('IT Service Manager')">IT Service Manager</div>
+                            <div class="role-option" onclick="selectRole('Blockchain Developer')">Blockchain Developer</div>
+                            <div class="role-option" onclick="selectRole('Web3 Developer')">Web3 Developer</div>
+                            <div class="role-option" onclick="selectRole('IoT Engineer')">IoT Engineer</div>
+                            <div class="role-option" onclick="selectRole('Embedded Systems Engineer')">Embedded Systems Engineer</div>
+                            <div class="role-option" onclick="selectRole('Robotics Engineer')">Robotics Engineer</div>
+                            <div class="role-option" onclick="selectRole('AR/VR Developer')">AR/VR Developer</div>
+                            <div class="role-option" onclick="selectRole('Quantum Computing Engineer')">Quantum Computing Engineer</div>
+                            <div class="role-option" onclick="selectRole('Edge Computing Engineer')">Edge Computing Engineer</div>
+                            <div class="role-option" onclick="selectRole('Other')">Other</div>
+                        </div>
+
+                        <!-- Hidden Custom Role Input Container (Appears when 'Other' is clicked) -->
+                        <div id="other-role-container" style="display: none; margin-top: 12px;">
+                            <input type="text" id="custom-role-input" placeholder="Enter your custom role..." class="role-text-input">
+                            <button class="btn-primary" onclick="saveCustomRole()">Save Custom Role</button>
+                        </div>
+
+                        <p id="selected-role-display" style="margin-top: 10px; color: #38bdf8; font-weight: bold;"></p>
+                    </div>
                 </div>
             </section>
 

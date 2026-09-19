@@ -27,10 +27,9 @@
     inset: 0;
     background: radial-gradient(circle, rgb(16, 8, 69), rgb(11, 6, 46), rgb(0, 0, 0));
     z-index: 0;
-    opacity: 0; /* Starts hidden until triggered by JS */
+    opacity: 0;
 }
 
-/* Background animation triggered AFTER preloader finishes */
 .container.animate-bg::before {
     animation: fadeBg 3s ease-in-out forwards;
 }
@@ -40,9 +39,7 @@
     z-index: 1;
 }
 
-/* ========================================================
-   Vertical Double Staircase Preloader Animation (Slower)
-======================================================== */
+/* Preloader Animation */
 .skiper-preloader {
     position: fixed;
     inset: 0;
@@ -61,14 +58,13 @@
     transition: opacity 0.5s ease;
 }
 
-/* Top and Bottom overlay containers */
 .skiper-overlay-left, .skiper-overlay-right {
     position: absolute;
     left: 0;
     right: 0;
     height: 50%;
     display: flex;
-    flex-direction: row; /* Horizontal arrangement for vertical movement */
+    flex-direction: row;
     z-index: 9999;
 }
 
@@ -79,35 +75,28 @@
     flex: 1;
     background: #000000;
     height: 100%;
-    /* Slower 1.5s vertical transition */
     transition: transform 1.5s cubic-bezier(0.77, 0, 0.175, 1);
 }
 
-/* Trigger classes for Vertical movement (Up and Down) */
 .skiper-preloader.active .loader-content {
     opacity: 0;
 }
 
-/* Top stairs move UP */
 .skiper-preloader.active .skiper-overlay-left .stair-step {
     transform: translateY(-100%);
 }
 
-/* Bottom stairs move DOWN */
 .skiper-preloader.active .skiper-overlay-right .stair-step {
     transform: translateY(100%);
 }
 
-/* Slower staggered delays */
 .stair-step:nth-child(1) { transition-delay: 0.1s; }
 .stair-step:nth-child(2) { transition-delay: 0.2s; }
 .stair-step:nth-child(3) { transition-delay: 0.3s; }
 .stair-step:nth-child(4) { transition-delay: 0.4s; }
 .stair-step:nth-child(5) { transition-delay: 0.5s; }
 
-/* ========================================================
-   Sidebar & Layout Styling
-======================================================== */
+/* Sidebar & Layout Styling */
 .sidebar {
     width: 280px;
     background: rgba(15, 10, 45, 0.65);
@@ -263,6 +252,51 @@
 }
 
 .btn-secondary { background: rgba(255, 255, 255, 0.1); }
+
+/* Role Selector Styling */
+.role-card {
+    grid-column: 1 / -1;
+}
+
+.role-search-input, .role-text-input {
+    width: 100%;
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 0.95rem;
+    margin-bottom: 12px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.role-search-input:focus, .role-text-input:focus {
+    border-color: #6366f1;
+}
+
+.role-dropdown-scrollable {
+    max-height: 180px;
+    overflow-y: auto;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 6px;
+}
+
+.role-option {
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s;
+    color: #cbd5e1;
+    font-size: 0.9rem;
+}
+
+.role-option:hover {
+    background: rgba(99, 102, 241, 0.25);
+    color: #ffffff;
+}
 
 /* Interview Area */
 .interview-container {

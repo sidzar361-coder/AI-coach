@@ -54,6 +54,14 @@ async function fetchUserData(email) {
                 document.getElementById("progress-val").innerText = `${progressVal}%`;
                 document.getElementById("progress-fill").style.width = `${progressVal}%`;
                 document.getElementById("progress-desc").innerText = progressDesc;
+
+                // Display saved role if it exists in the database record
+                if (user.Role) {
+                    const displayEl = document.getElementById('selected-role-display');
+                    if (displayEl) {
+                        displayEl.innerText = "Selected Role: " + user.Role;
+                    }
+                }
             }
         }
     } catch (err) {
@@ -177,6 +185,82 @@ if (SpeechRecognition) {
     recognition.onend = () => {
         listenBtn.style.background = "#10b981";
     };
+}
+
+// ==========================================
+// Role Selection & Supabase Sync Functions
+// ==========================================
+
+// Filter roles dynamically from search bar input
+function filterRoles() {
+    let input = document.getElementById('role-search-input').value.toLowerCase();
+    let container = document.getElementById('role-dropdown-container');
+    let options = container.getElementsByClassName('role-option');
+
+    for (let i = 0; i < options.length; i++) {
+        let txtValue = options[i].textContent || options[i].innerText;
+        if (txtValue.toLowerCase().indexOf(input) > -1) {
+            options[i].style.display = "";
+        } else {
+            options[i].style.display = "none";
+        }
+    }
+}
+
+// Handle selection of a role from the scrollable list
+function selectRole(role) {
+    document.getElementById('selected-role-display').innerText = "Selected Role: " + role;
+    
+    let otherContainer = document.getElementById('other-role-container');
+    if (role === 'Other') {
+        otherContainer.style.display = 'block';
+    } else {
+        otherContainer.style.display = 'none';
+        updateRoleInSupabase(role);
+    }
+}
+
+// Handle saving custom role when "Other" is chosen
+function saveCustomRole() {
+    let customRole = document.getElementById('custom-role-input').value.trim();
+    if (!customRole) {
+        alert("Please enter a valid role description.");
+        return;
+    }
+    document.getElementById('selected-role-display').innerText = "Selected Role: " + customRole;
+    updateRoleInSupabase(customRole);
+}
+
+// Update the user's role field in Supabase REST database
+async function updateRoleInSupabase(roleName) {
+    if (!currentUserEmail) {
+        alert("User session not found. Please log in again.");
+        return;
+    }
+
+    try {
+        const response = await fetch(`${SUPABASE_URL}?Email_ID=eq.${encodeURIComponent(currentUserEmail)}`, {
+            method: "PATCH",
+            headers: {
+                "apikey": SUPABASE_KEY,
+                "Authorization": `Bearer ${SUPABASE_KEY}`,
+                "Content-Type": "application/json",
+                "Prefer": "return=minimal"
+            },
+            body: JSON.stringify({ Role: roleName })
+        });
+
+        if (response.ok) {
+            alert("Role successfully updated in Supabase!");
+        } else {
+            let err = await response.text();
+            console.error("Supabase role update error:", err);
+            alert("Failed to save role to database.");
+        }
+    } catch (error) {
+        console.error("Network exception while updating role:", error);
+        alert("An error occurred while saving your role.");
+    }
 }
 
 function logout() {
