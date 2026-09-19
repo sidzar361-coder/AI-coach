@@ -177,6 +177,10 @@ function getCandidateId() {
     return candidateId;
 }
 
+function getSessionId() {
+    return interviewSession?.session_id || interviewSession?.id;
+}
+
 async function ensureInterviewSession() {
     const storedId = localStorage.getItem('ai_coach_session_id');
     if (storedId) {
@@ -191,15 +195,17 @@ async function ensureInterviewSession() {
         method: 'POST',
         body: JSON.stringify({ candidate_id: getCandidateId() })
     });
-    interviewSession = response.session;
+    interviewSession = { ...response.session, session_id: response.session_id };
     localStorage.setItem('ai_coach_session_id', response.session_id);
     return interviewSession;
 }
 
 async function getNextQuestion() {
-    const response = await apiRequest(`/session/${interviewSession.session_id}/question`);
+    const sessionId = getSessionId();
+    if (!sessionId) throw new Error('Interview session ID is missing. Please start the round again.');
+    const response = await apiRequest(`/session/${sessionId}/question`);
     currentQuestion = response.question;
-    interviewSession = await apiRequest(`/session/${interviewSession.session_id}`);
+    interviewSession = await apiRequest(`/session/${sessionId}`);
     return currentQuestion;
 }
 
@@ -217,8 +223,10 @@ function renderEvaluation(evaluation) {
 
 async function submitTranscript(transcript) {
     if (!currentQuestion || !interviewSession) throw new Error('Start a round before submitting an answer.');
+    const sessionId = getSessionId();
+    if (!sessionId) throw new Error('Interview session ID is missing. Please start the round again.');
     setInterviewStatus('Sending your answer to the AI evaluator...');
-    const response = await apiRequest(`/session/${interviewSession.session_id}/answer`, {
+    const response = await apiRequest(`/session/${sessionId}/answer`, {
         method: 'POST',
         body: JSON.stringify({
             question_id: currentQuestion.id,
