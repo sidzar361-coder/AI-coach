@@ -9,6 +9,12 @@
     }
 }
 
+/* Target exclusively Chrome / Chromium-based engines */
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+    body {
+        zoom: 75%;
+    }
+}
 
 * {
     padding: 0px;
