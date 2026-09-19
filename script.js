@@ -17,12 +17,9 @@ window.addEventListener('load', () => {
         const preloader = document.getElementById('preloader');
         preloader.classList.add('active'); // Triggers stairs moving UP and DOWN
 
-        // 3. Wait for the 1.5s stair transition + stagger delays to finish
+        // 3. Wait for transition to finish
         setTimeout(() => {
-            // Start the container background effect
             document.querySelector('.container').classList.add('animate-bg');
-            
-            // Remove preloader screen entirely
             preloader.style.display = 'none';
         }, 2100); 
 
@@ -55,12 +52,11 @@ async function fetchUserData(email) {
                 document.getElementById("progress-fill").style.width = `${progressVal}%`;
                 document.getElementById("progress-desc").innerText = progressDesc;
 
-                // Display saved role if it exists in the database record
+                // Handle loading and displaying saved role from database
                 if (user.Role) {
-                    const displayEl = document.getElementById('selected-role-display');
-                    if (displayEl) {
-                        displayEl.innerText = "Selected Role: " + user.Role;
-                    }
+                    document.getElementById('selected-role-display').innerText = "Selected Role: " + user.Role;
+                    document.getElementById('role-dropdown-container').style.display = 'none';
+                    document.getElementById('btn-edit-role').style.display = 'inline-block';
                 }
             }
         }
@@ -207,9 +203,11 @@ function filterRoles() {
     }
 }
 
-// Handle selection of a role from the scrollable list
+// Handle selection of a role from the list
 function selectRole(role) {
     document.getElementById('selected-role-display').innerText = "Selected Role: " + role;
+    document.getElementById('role-dropdown-container').style.display = 'none';
+    document.getElementById('btn-edit-role').style.display = 'inline-block';
     
     let otherContainer = document.getElementById('other-role-container');
     if (role === 'Other') {
@@ -228,10 +226,23 @@ function saveCustomRole() {
         return;
     }
     document.getElementById('selected-role-display').innerText = "Selected Role: " + customRole;
+    document.getElementById('other-role-container').style.display = 'none';
+    document.getElementById('role-dropdown-container').style.display = 'none';
+    document.getElementById('btn-edit-role').style.display = 'inline-block';
+    
     updateRoleInSupabase(customRole);
 }
 
-// Update the user's role field in Supabase REST database
+// Re-enable role selection view so user can change it
+function enableRoleChange() {
+    document.getElementById('role-dropdown-container').style.display = 'block';
+    document.getElementById('btn-edit-role').style.display = 'none';
+    document.getElementById('selected-role-display').innerText = "";
+    document.getElementById('role-search-input').value = "";
+    filterRoles(); // Reset filter view
+}
+
+// Update the user's role field in Supabase database
 async function updateRoleInSupabase(roleName) {
     if (!currentUserEmail) {
         alert("User session not found. Please log in again.");
@@ -264,9 +275,6 @@ async function updateRoleInSupabase(roleName) {
 }
 
 function logout() {
-    // Clear user session from storage
     localStorage.removeItem("user_email");
-    
-    // Redirect user to the sign-in page
     window.location.href = "signin.html";
 }
