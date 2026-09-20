@@ -34,6 +34,7 @@ class SessionApiService:
             candidate_profile=request.candidate_profile,
             current_stage=request.current_stage,
             initial_difficulty=request.initial_difficulty,
+            target_round=getattr(request, 'target_round', 1),
         )
         return self.repository.create(session)
 

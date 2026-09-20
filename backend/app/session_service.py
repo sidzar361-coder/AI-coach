@@ -1,7 +1,7 @@
 from uuid import UUID
 
-from .models import CandidateProfile, Difficulty, InterviewSession
-from .round_state_machine import start_session
+from .models import CandidateProfile, Difficulty, InterviewSession, RoundNumber
+from .round_state_machine import start_session, complete_current_round
 
 
 def create_session(
@@ -10,6 +10,7 @@ def create_session(
     initial_difficulty: Difficulty = Difficulty.MEDIUM,
     current_stage: str = "candidate_background",
     target_role: str | None = None,
+    target_round: int = 1,
 ) -> InterviewSession:
     profile = candidate_profile or CandidateProfile()
     if target_role:
@@ -25,4 +26,10 @@ def create_session(
         current_difficulty=initial_difficulty,
         difficulty_progression=[initial_difficulty],
     )
-    return start_session(session)
+    started_session = start_session(session)
+    
+    # Advance session state machine to the requested target round
+    while started_session.current_round < target_round and started_session.current_round != RoundNumber.FINAL_EVALUATION:
+        complete_current_round(started_session)
+        
+    return started_session

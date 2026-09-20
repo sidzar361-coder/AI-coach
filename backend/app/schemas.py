@@ -19,13 +19,14 @@ from .models import (
 
 
 class CreateSessionRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")  # Changed to ignore/allow extra fields gracefully
 
     candidate_id: UUID
     candidate_profile: CandidateProfile = Field(default_factory=CandidateProfile)
     current_stage: str = Field(default="candidate_background", min_length=1)
     initial_difficulty: Difficulty = Difficulty.MEDIUM
     target_role: Optional[str] = None
+    target_round: int = Field(default=1, ge=1, le=4)  # Added target_round field
 
 
 class CreateSessionResponse(BaseModel):

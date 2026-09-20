@@ -16,6 +16,7 @@ let completedQuestionCount = 0;
 let processedFinalResults = new Set();
 let recognitionRunning = false;
 let submitRequested = false;
+let selectedTargetRound = 1;
 
 const ROUND_DISPLAY_NAMES = {
     1: 'Aptitude Round',
@@ -139,16 +140,27 @@ function highlightSidebarButton(roundName) {
 
 async function startInterview(roundName) {
     highlightSidebarButton(roundName);
-
     document.getElementById('current-round-title').innerText = roundName;
     switchTab('interview');
     setInterviewStatus("Connecting to the AI interviewer...");
+
+    const roundNumberMapping = {
+        'Aptitude Round': 1,
+        'Project / Managerial Round': 2,
+        'Technical Round': 3,
+        'Problem-Solving / Behavioral Round': 4
+    };
+    selectedTargetRound = roundNumberMapping[roundName] || 1;
+
     try {
+        localStorage.removeItem('ai_coach_session_id');
         await ensureInterviewSession();
+
         const question = await getNextQuestion();
         completedQuestionCount = interviewSession.previous_questions?.filter(
             q => q.round_number === interviewSession.current_round && q.answered
         ).length || 0;
+        
         const greeting = `Welcome to the ${roundName}. Question ${completedQuestionCount + 1} of 7.`;
         addChatMessage("AI Coach", `${greeting} ${question.text}`);
         speakText(`${greeting} ${question.text}`);
@@ -221,7 +233,8 @@ async function ensureInterviewSession() {
         method: 'POST',
         body: JSON.stringify({ 
             candidate_id: getCandidateId(),
-            target_role: userRole 
+            target_role: userRole,
+            target_round: selectedTargetRound 
         })
     });
     interviewSession = { ...response.session, session_id: response.session_id };
@@ -313,6 +326,7 @@ function resetInterviewForRetry() {
     processedFinalResults.clear();
     recognitionRunning = false;
     submitRequested = false;
+    selectedTargetRound = 1;
     setListenButton('Speak Answer (STT)', false);
     localStorage.removeItem('ai_coach_session_id');
     
