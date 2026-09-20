@@ -67,7 +67,15 @@ class EvaluationGenerationError(RuntimeError):
 def parse_and_validate_evaluation(raw_response: str) -> GeminiEvaluationResponse:
     if not isinstance(raw_response, str):
         raise TypeError("Gemini response must be text")
-    return GeminiEvaluationResponse.model_validate_json(raw_response)
+    
+    cleaned = raw_response.strip()
+    # Strip markdown code blocks if present in the LLM response
+    if cleaned.startswith("```"):
+        cleaned = cleaned.removeprefix("```json").removeprefix("```").strip()
+        if cleaned.endswith("```"):
+            cleaned = cleaned[:-3].strip()
+
+    return GeminiEvaluationResponse.model_validate_json(cleaned)
 
 
 def build_evaluation_prompt(
