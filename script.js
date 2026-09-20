@@ -1,12 +1,13 @@
 const SUPABASE_URL = "https://fvgwubrhxlpwyoqkbakm.supabase.co/rest/v1/Signup_Data";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ2Z3d1YnJoeGxwd3lvcWtiYWttIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkzNjUyMzAsImV4cCI6MjEwNDk0MTIzMH0.pFQl2ZDwJSj-Vjsp-jvUFCEDmDAmWEWg0Sar_-jTdn8";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ2Z3d1YnJoeGxwd3lvcWtiYWktbW9yb3IiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc4OTM2NTIzMCwiZXhwIjoyMTA0OTQxMjMwfQ.pFQl2ZDwJSj-Vjsp-jvUFCEDmDAmWEWg0Sar_-jTdn8";
 
 const API_BASE_URL = window.AI_COACH_API_URL || "https://interviewai-backend-m02b.onrender.com";
 let currentUserEmail = localStorage.getItem("user_email") || "";
 let interviewSession = null;
 let currentQuestion = null;
 let latestScore = 0;
-let sessionScores = []; // Tracks scores for all questions answered in the current session
+let sessionScores = []; 
+let sessionQuestionLogs = []; // Stores question logs silently for AI memory
 let recognition = null;
 let isListening = false;
 let pendingTranscript = '';
@@ -16,7 +17,6 @@ let processedFinalResults = new Set();
 let recognitionRunning = false;
 let submitRequested = false;
 
-// Exact round name mapping matching your UI sidebar items
 const ROUND_DISPLAY_NAMES = {
     1: 'Aptitude Round',
     2: 'Project / Managerial Round',
@@ -67,6 +67,30 @@ async function fetchUserData(email) {
                 
                 document.getElementById("progress-val").innerText = `${latestScore}/100`;
                 document.getElementById("progress-fill").style.width = `${Math.max(0, Math.min(100, latestScore))}%`;
+
+                // Load visible feedback items into the card
+                if (user.Improvements) {
+                    const lines = user.Improvements.split('\n').filter(l => l.trim().length > 0);
+                    const improvementsContainer = document.getElementById("ai-improvements");
+                    
+                    if (improvementsContainer) improvementsContainer.replaceChildren();
+
+                    lines.forEach(line => {
+                        const cleanLine = line.replace(/^[•\-\*]\s*/, '');
+                        if (improvementsContainer) {
+                            const li = document.createElement('li');
+                            li.textContent = cleanLine;
+                            improvementsContainer.appendChild(li);
+                        }
+                    });
+                }
+
+                // Load background question logs separately from Progress_Description
+                if (user.Progress_Description) {
+                    sessionQuestionLogs = user.Progress_Description.split('\n').filter(l => l.trim().length > 0);
+                } else {
+                    sessionQuestionLogs = [];
+                }
 
                 if (user.Role) {
                     document.getElementById('selected-role-display').innerText = "Selected Role: " + user.Role;
@@ -218,7 +242,6 @@ function renderEvaluation(evaluation) {
         sessionScores.push(Number(evaluation.score));
     }
     
-    // Calculate the average score for all questions asked so far
     if (sessionScores.length > 0) {
         const sum = sessionScores.reduce((acc, curr) => acc + curr, 0);
         latestScore = Math.round(sum / sessionScores.length);
@@ -226,29 +249,27 @@ function renderEvaluation(evaluation) {
         latestScore = Math.round(evaluation.score || 0);
     }
 
-    const strengths = evaluation.strengths?.length ? evaluation.strengths : ['Keep building clear, structured answers.'];
-    const weaknesses = evaluation.weaknesses?.length ? evaluation.weaknesses : ['No major gaps identified for this answer.'];
-    const topics = evaluation.recommended_topics?.length ? evaluation.recommended_topics : [];
+    const strengths = evaluation.strengths?.length ? evaluation.strengths : ['Clear voice delivery.'];
+    const weaknesses = evaluation.weaknesses?.length ? evaluation.weaknesses : ['Maintain concise pacing.'];
+    const questionTopic = evaluation.recommended_topics?.[0] || 'Covered general question concept.';
     
     document.getElementById('progress-val').innerText = `${latestScore}/100`;
     document.getElementById('progress-fill').style.width = `${latestScore}%`;
 
-    const improvements = document.getElementById('ai-improvements');
-    improvements.replaceChildren();
-    
-    if (evaluation.feedback) {
-        const feedbackItem = document.createElement('li');
-        feedbackItem.textContent = evaluation.feedback;
-        improvements.appendChild(feedbackItem);
-    }
+    // Push topic silently to session logs (kept out of UI card)
+    sessionQuestionLogs.push(`Question Type Log: ${questionTopic}`);
 
-    [
-        `Strengths: ${strengths.join('; ')}`,
-        `Focus next: ${weaknesses.join('; ')}`,
-        ...(topics.length ? [`Practice next: ${topics.join(', ')}`] : [])
-    ].forEach(summary => {
+    const improvements = document.getElementById('ai-improvements');
+
+    strengths.forEach(s => {
         const item = document.createElement('li');
-        item.textContent = summary;
+        item.textContent = `Delivery Strength: ${s}`;
+        improvements.appendChild(item);
+    });
+
+    weaknesses.forEach(w => {
+        const item = document.createElement('li');
+        item.textContent = `Skill to Work On: ${w}`;
         improvements.appendChild(item);
     });
 }
@@ -259,11 +280,8 @@ function renderFinalReport(report) {
     document.getElementById('progress-val').innerText = `${score}/100`;
     document.getElementById('progress-fill').style.width = `${score}%`;
     
-    const dashboardImprovements = document.getElementById('ai-improvements');
-    dashboardImprovements.replaceChildren();
-
     const summary = document.getElementById('final-summary-card');
-    document.getElementById('final-summary-text').innerText = `Overall average score: ${score}/100. ${report.strengths?.length ? `Strongest areas: ${report.strengths.join('; ')}.` : ''}`;
+    document.getElementById('final-summary-text').innerText = `Overall communication score: ${score}/100.`;
     const improvements = document.getElementById('final-summary-improvements');
     improvements.replaceChildren();
     
@@ -272,7 +290,6 @@ function renderFinalReport(report) {
         const item = document.createElement('li');
         item.textContent = text;
         improvements.appendChild(item);
-        dashboardImprovements.appendChild(item.cloneNode(true));
     });
     summary.style.display = 'block';
 
@@ -285,6 +302,7 @@ function resetInterviewForRetry() {
     currentQuestion = null;
     latestScore = 0;
     sessionScores = [];
+    sessionQuestionLogs = [];
     completedQuestionCount = 0;
     pendingTranscript = '';
     interimTranscript = '';
@@ -313,7 +331,7 @@ async function resetStoredProgress() {
             'Content-Type': 'application/json',
             'Prefer': 'return=minimal'
         },
-        body: JSON.stringify({ Progress: 0, Progress_Description: 'A new interview attempt is ready.' })
+        body: JSON.stringify({ Progress: 0, Improvements: '', Progress_Description: '' })
     });
 }
 
@@ -321,7 +339,7 @@ async function submitTranscript(transcript) {
     if (!currentQuestion || !interviewSession) throw new Error('Start a round before submitting an answer.');
     const sessionId = getSessionId();
     if (!sessionId) throw new Error('Interview session ID is missing. Please start the round again.');
-    setInterviewStatus('Sending your answer to the AI evaluator...');
+    setInterviewStatus('Evaluating your speaking delivery...');
     setListenButton('Speak Answer (STT)', false);
     const response = await apiRequest(`/session/${sessionId}/answer`, {
         method: 'POST',
@@ -334,16 +352,16 @@ async function submitTranscript(transcript) {
     });
     interviewSession = response.session;
     renderEvaluation(response.evaluation);
-    const reply = `Score ${Math.round(response.evaluation.score)} out of 100. Average score so far: ${latestScore}/100. ${response.evaluation.feedback}`;
+    const reply = `Communication score: ${Math.round(response.evaluation.score)}/100. ${response.evaluation.feedback}`;
     addChatMessage('AI Coach', reply);
     speakText(reply);
-    setInterviewStatus('AI feedback is ready. Start another round or continue practising.');
+    setInterviewStatus('Feedback is ready. Continue practicing or start another round.');
     await persistAiProgress();
     
     if (interviewSession.final_report) {
         renderFinalReport(interviewSession.final_report);
         await persistAiProgress();
-        speakText('All interview rounds are complete. Your summary and progress are now ready on the dashboard.');
+        speakText('All interview rounds are complete. Your speaking performance summary is now ready on the dashboard.');
     } else if (interviewSession.status !== 'completed') {
         try {
             const nextQuestion = await getNextQuestion();
@@ -365,9 +383,14 @@ async function submitTranscript(transcript) {
 async function persistAiProgress() {
     if (!currentUserEmail) return;
     
-    const aggregatedFeedbackText = Array.from(document.querySelectorAll('#ai-improvements li'))
-        .map(item => item.innerText)
-        .join(' ');
+    // Get visible bullet points for Improvements column
+    const listItemsText = Array.from(document.querySelectorAll('#ai-improvements li'))
+        .map(item => item.innerText.trim())
+        .filter(text => text.length > 0)
+        .join('\n');
+
+    // Get hidden logs for Progress_Description column
+    const questionLogsText = sessionQuestionLogs.join('\n');
 
     const response = await fetch(`${SUPABASE_URL}?Email_ID=eq.${encodeURIComponent(currentUserEmail)}`, {
         method: 'PATCH',
@@ -379,10 +402,11 @@ async function persistAiProgress() {
         },
         body: JSON.stringify({
             Progress: latestScore,
-            Progress_Description: aggregatedFeedbackText || 'No practice feedback recorded yet.'
+            Improvements: listItemsText,
+            Progress_Description: questionLogsText
         })
     });
-    if (!response.ok) console.warn('Could not persist AI score to Supabase.');
+    if (!response.ok) console.warn('Could not persist cumulative progress to Supabase.');
 }
 
 function speakText(text) {

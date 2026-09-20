@@ -69,7 +69,6 @@ def parse_and_validate_evaluation(raw_response: str) -> GeminiEvaluationResponse
         raise TypeError("Gemini response must be text")
     
     cleaned = raw_response.strip()
-    # Strip markdown code blocks if present in the LLM response
     if cleaned.startswith("```"):
         cleaned = cleaned.removeprefix("```json").removeprefix("```").strip()
         if cleaned.endswith("```"):
@@ -83,26 +82,25 @@ def build_evaluation_prompt(
     question: InterviewQuestion,
     answer: CandidateAnswer,
 ) -> str:
+    # Compile a history of previously asked question types/topics in this session to prevent repetition
+    asked_topics = [q.text[:40] for q in session.questions if q.id != question.id]
+    history_context = f"Previously covered question concepts in this session: {asked_topics}" if asked_topics else "This is the first question."
+
     return (
-        "You are a professional Quantumaze interviewer evaluating one answer.\n"
+        "You are an expert interview coach.\n"
+        "Do NOT provide technical solution corrections or math answers.\n"
+        "Instead, evaluate ONLY the candidate's speaking style/delivery, and identify the core topic/type of the question just answered.\n"
         "Return ONLY valid JSON with exactly these keys: score, strengths, weaknesses, feedback, "
         "recommended_topic, recommended_difficulty.\n"
-        "The score must be a numeric integer directly on the 0-100 scale.\n"
-        "0 means completely incorrect or no meaningful answer.\n"
-        "100 means exceptionally correct, complete, and well-reasoned.\n"
-        "NEVER use a 0-10 scale. NEVER return a percentage outside 0-100.\n"
-        "Evaluate technical correctness, understanding, reasoning, relevance, completeness, "
-        "practical application, and clarity. Do not let grammar or answer length dominate. "
-        "A concise technically correct answer can receive a high score.\n"
-        f"Candidate profile and experience: {session.candidate_profile.model_dump_json()}\n"
-        f"Current round: {session.current_round.value}\n"
-        f"Current difficulty: {session.current_difficulty.value}\n"
-        f"Question: {question.text}\n"
-        f"Candidate answer: {answer.text}\n"
-        f"Previous questions: {[item.model_dump() for item in session.questions]}\n"
-        f"Previous answers: {[item.model_dump() for item in session.answers]}\n"
-        f"Previous evaluations: {[item.model_dump() for item in session.evaluations]}\n"
-        f"Relevant round history: {[item.model_dump() for item in session.round_history]}\n"
+        "- score: Integer from 0 to 100 based on speaking delivery.\n"
+        "- strengths: Short bullet points on speaking delivery strengths.\n"
+        "- weaknesses: Short bullet points on communication skills to improve.\n"
+        "- feedback: A brief statement on delivery.\n"
+        f"- recommended_topic: A short phrase describing the specific question type/concept just covered (e.g., 'Covered: Object-Oriented Programming concepts') so future questions can avoid repeating this type.\n"
+        "- recommended_difficulty: MEDIUM\n"
+        f"{history_context}\n"
+        f"Current Question Text: {question.text}\n"
+        f"Candidate Answer: {answer.text}\n"
     )
 
 
