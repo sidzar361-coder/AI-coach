@@ -6,6 +6,7 @@ let currentUserEmail = localStorage.getItem("user_email") || "";
 let interviewSession = null;
 let currentQuestion = null;
 let latestScore = 0;
+let sessionScores = []; // Tracks scores for all questions answered in the current session
 let recognition = null;
 let isListening = false;
 let pendingTranscript = '';
@@ -15,7 +16,7 @@ let processedFinalResults = new Set();
 let recognitionRunning = false;
 let submitRequested = false;
 
-// Exact round name mapping matching your UI sidebar sidebar items
+// Exact round name mapping matching your UI sidebar items
 const ROUND_DISPLAY_NAMES = {
     1: 'Aptitude Round',
     2: 'Project / Managerial Round',
@@ -62,12 +63,10 @@ async function fetchUserData(email) {
                 document.getElementById("user-email-display").innerText = user.Email_ID;
 
                 const progressVal = user.Progress !== undefined ? user.Progress : 0;
-                const progressDesc = user.Progress_Description || "No practice feedback recorded yet.";
-
                 latestScore = Number(progressVal) || 0;
+                
                 document.getElementById("progress-val").innerText = `${latestScore}/100`;
                 document.getElementById("progress-fill").style.width = `${Math.max(0, Math.min(100, latestScore))}%`;
-                document.getElementById("progress-desc").innerText = progressDesc;
 
                 if (user.Role) {
                     document.getElementById('selected-role-display').innerText = "Selected Role: " + user.Role;
@@ -83,11 +82,10 @@ async function fetchUserData(email) {
 
 function switchTab(tabName) {
     document.querySelectorAll('.view-panel').forEach(panel => panel.classList.remove('active'));
-    document.querySelectorAll('.round-btn').forEach(btn => btn.classList.remove('active-round'));
+    document.querySelectorAll('.rounds-list li').forEach(btn => btn.classList.remove('active'));
     
     if (tabName === 'dashboard') {
         document.getElementById('dashboard-view').classList.add('active');
-        // Highlight the Summary & Progress button in sidebar
         highlightSidebarButton('Summary & Progress');
     } else {
         document.getElementById('interview-view').classList.add('active');
@@ -95,24 +93,22 @@ function switchTab(tabName) {
 }
 
 function highlightSidebarButton(roundName) {
-    document.querySelectorAll('.round-btn').forEach(btn => btn.classList.remove('active-round'));
+    document.querySelectorAll('.rounds-list li').forEach(btn => btn.classList.remove('active'));
     
-    // Map button names/identifiers accurately to DOM elements
     const roundMapping = {
-        'Summary & Progress': ['Summary & Progress', 'btn-summary'],
-        'Aptitude Round': ['Aptitude Round', 'btn-aptitude'],
-        'Project / Managerial Round': ['Project / Managerial Round', 'btn-project'],
-        'Technical Round': ['Technical Round', 'btn-technical'],
-        'Problem-Solving / Behavioral Round': ['Problem-Solving / Behavioral Round', 'btn-problem']
+        'Summary & Progress': ['Summary & Progress'],
+        'Aptitude Round': ['Aptitude Round'],
+        'Project / Managerial Round': ['Project / Managerial Round'],
+        'Technical Round': ['Technical Round'],
+        'Problem-Solving / Behavioral Round': ['Problem-Solving / Behavioral Round']
     };
 
-    // Find button by matching text content inside the sidebar buttons
-    const buttons = document.querySelectorAll('.round-btn');
+    const buttons = document.querySelectorAll('.rounds-list li');
     buttons.forEach(btn => {
         const text = btn.innerText.trim();
         for (const [key, aliases] of Object.entries(roundMapping)) {
-            if (aliases.includes(text) && key === roundName) {
-                btn.classList.add('active-round');
+            if (aliases.some(alias => text.includes(alias)) && key === roundName) {
+                btn.classList.add('active');
             }
         }
     });
@@ -218,16 +214,34 @@ async function getNextQuestion() {
 }
 
 function renderEvaluation(evaluation) {
-    latestScore = Math.round(evaluation.score);
+    if (evaluation.score !== undefined) {
+        sessionScores.push(Number(evaluation.score));
+    }
+    
+    // Calculate the average score for all questions asked so far
+    if (sessionScores.length > 0) {
+        const sum = sessionScores.reduce((acc, curr) => acc + curr, 0);
+        latestScore = Math.round(sum / sessionScores.length);
+    } else {
+        latestScore = Math.round(evaluation.score || 0);
+    }
+
     const strengths = evaluation.strengths?.length ? evaluation.strengths : ['Keep building clear, structured answers.'];
     const weaknesses = evaluation.weaknesses?.length ? evaluation.weaknesses : ['No major gaps identified for this answer.'];
     const topics = evaluation.recommended_topics?.length ? evaluation.recommended_topics : [];
+    
     document.getElementById('progress-val').innerText = `${latestScore}/100`;
     document.getElementById('progress-fill').style.width = `${latestScore}%`;
-    document.getElementById('progress-desc').innerText = evaluation.feedback || 'AI feedback is ready.';
 
     const improvements = document.getElementById('ai-improvements');
     improvements.replaceChildren();
+    
+    if (evaluation.feedback) {
+        const feedbackItem = document.createElement('li');
+        feedbackItem.textContent = evaluation.feedback;
+        improvements.appendChild(feedbackItem);
+    }
+
     [
         `Strengths: ${strengths.join('; ')}`,
         `Focus next: ${weaknesses.join('; ')}`,
@@ -240,18 +254,19 @@ function renderEvaluation(evaluation) {
 }
 
 function renderFinalReport(report) {
-    const score = report.overall_score == null ? 0 : Math.round(report.overall_score);
+    const score = report.overall_score == null ? latestScore : Math.round(report.overall_score);
     latestScore = score;
     document.getElementById('progress-val').innerText = `${score}/100`;
     document.getElementById('progress-fill').style.width = `${score}%`;
-    document.getElementById('progress-desc').innerText = 'All interview rounds are complete. Your final AI summary is ready.';
+    
     const dashboardImprovements = document.getElementById('ai-improvements');
     dashboardImprovements.replaceChildren();
 
     const summary = document.getElementById('final-summary-card');
-    document.getElementById('final-summary-text').innerText = `Overall score: ${score}/100. ${report.strengths?.length ? `Strongest areas: ${report.strengths.join('; ')}.` : ''}`;
+    document.getElementById('final-summary-text').innerText = `Overall average score: ${score}/100. ${report.strengths?.length ? `Strongest areas: ${report.strengths.join('; ')}.` : ''}`;
     const improvements = document.getElementById('final-summary-improvements');
     improvements.replaceChildren();
+    
     const items = report.weaknesses?.length ? report.weaknesses : (report.recommendations || []);
     items.slice(0, 5).forEach(text => {
         const item = document.createElement('li');
@@ -261,7 +276,6 @@ function renderFinalReport(report) {
     });
     summary.style.display = 'block';
 
-    // Redirect to Summary & Progress section and highlight its button
     switchTab('dashboard');
     highlightSidebarButton('Summary & Progress');
 }
@@ -270,6 +284,7 @@ function resetInterviewForRetry() {
     interviewSession = null;
     currentQuestion = null;
     latestScore = 0;
+    sessionScores = [];
     completedQuestionCount = 0;
     pendingTranscript = '';
     interimTranscript = '';
@@ -281,7 +296,6 @@ function resetInterviewForRetry() {
     
     document.getElementById('progress-val').innerText = '0/100';
     document.getElementById('progress-fill').style.width = '0%';
-    document.getElementById('progress-desc').innerText = 'No completed interview yet.';
     document.getElementById('ai-improvements').replaceChildren();
     document.getElementById('final-summary-card').style.display = 'none';
     document.getElementById('chat-box').innerHTML = '<div class="chat-message ai-message"><strong>AI Coach:</strong> Start a round to receive an AI-generated question.</div>';
@@ -320,7 +334,7 @@ async function submitTranscript(transcript) {
     });
     interviewSession = response.session;
     renderEvaluation(response.evaluation);
-    const reply = `Score ${Math.round(response.evaluation.score)} out of 100. ${response.evaluation.feedback}`;
+    const reply = `Score ${Math.round(response.evaluation.score)} out of 100. Average score so far: ${latestScore}/100. ${response.evaluation.feedback}`;
     addChatMessage('AI Coach', reply);
     speakText(reply);
     setInterviewStatus('AI feedback is ready. Start another round or continue practising.');
@@ -350,6 +364,11 @@ async function submitTranscript(transcript) {
 
 async function persistAiProgress() {
     if (!currentUserEmail) return;
+    
+    const aggregatedFeedbackText = Array.from(document.querySelectorAll('#ai-improvements li'))
+        .map(item => item.innerText)
+        .join(' ');
+
     const response = await fetch(`${SUPABASE_URL}?Email_ID=eq.${encodeURIComponent(currentUserEmail)}`, {
         method: 'PATCH',
         headers: {
@@ -360,10 +379,7 @@ async function persistAiProgress() {
         },
         body: JSON.stringify({
             Progress: latestScore,
-            Progress_Description: [
-                document.getElementById('progress-desc').innerText,
-                ...Array.from(document.querySelectorAll('#ai-improvements li')).map(item => item.innerText)
-            ].join(' ')
+            Progress_Description: aggregatedFeedbackText || 'No practice feedback recorded yet.'
         })
     });
     if (!response.ok) console.warn('Could not persist AI score to Supabase.');

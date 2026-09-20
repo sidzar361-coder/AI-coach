@@ -220,9 +220,8 @@
     color: #c7d2fe;
 }
 
-/* Flex-fill Box Size & Custom Scrollbar for Feedback Box */
-.card:has(#ai-improvements),
-.card:has(#progress-desc) {
+/* Feedback Card Styling (Only Improvements shown & scrolled) */
+.card:has(#ai-improvements) {
     display: flex;
     flex-direction: column;
     height: 100%;
@@ -231,35 +230,30 @@
     overflow: hidden;
 }
 
-#ai-improvements,
-#progress-desc {
+#ai-improvements {
     flex: 1;
     overflow-y: auto;
     padding-right: 6px;
-    margin-top: 6px;
+    margin-top: 10px;
     word-break: break-word;
 }
 
 /* Custom Scrollbars */
-#ai-improvements::-webkit-scrollbar,
-#progress-desc::-webkit-scrollbar {
+#ai-improvements::-webkit-scrollbar {
     width: 5px;
 }
 
-#ai-improvements::-webkit-scrollbar-track,
-#progress-desc::-webkit-scrollbar-track {
+#ai-improvements::-webkit-scrollbar-track {
     background: rgba(255, 255, 255, 0.03);
     border-radius: 4px;
 }
 
-#ai-improvements::-webkit-scrollbar-thumb,
-#progress-desc::-webkit-scrollbar-thumb {
+#ai-improvements::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.2);
     border-radius: 4px;
 }
 
-#ai-improvements::-webkit-scrollbar-thumb:hover,
-#progress-desc::-webkit-scrollbar-thumb:hover {
+#ai-improvements::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.4);
 }
 
@@ -393,29 +387,49 @@
 .user-message { color: #38bdf8; }
 .ai-message { color: #a7f3d0; }
 
+/* Voice Controls & Speech Buttons Styling */
 .voice-controls {
     display: flex;
     gap: 15px;
     flex-wrap: wrap;
+    align-items: center;
+    margin-top: 15px;
 }
 
 .btn-speech {
-    flex: 1;
-    padding: 14px;
-    border-radius: 8px;
+    padding: 10px 18px;
     border: none;
+    border-radius: 8px;
     background: #10b981;
     color: white;
-    font-weight: bold;
     cursor: pointer;
-    min-width: 150px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
 }
 
-.btn-speech.alt { background: #8b5cf6; }
-.btn-speech.save { background: #3b82f6; }
+.btn-speech:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
 
-.status-indicator {
-    margin-top: 10px;
-    font-size: 0.85rem;
-    color: #94a3b8;
+.btn-speech.alt {
+    background: #4f46e5;
+}
+
+select.btn-speech {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #fff;
+    padding: 10px 14px;
+    outline: none;
+    cursor: pointer;
+}
+
+select.btn-speech option {
+    background: #0f1026;
+    color: #fff;
 }
