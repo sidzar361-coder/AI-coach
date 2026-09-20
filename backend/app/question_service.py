@@ -73,26 +73,27 @@ def parse_and_validate(raw_response: str) -> GeminiQuestionResponse:
 
 
 def build_question_prompt(session: InterviewSession) -> str:
+    role_name = getattr(session.candidate_profile, 'target_role', 'Software Engineer')
+
     instructions = {
         RoundNumber.BACKGROUND: (
-            "This is the Aptitude Round. Ask one aptitude question involving quantitative reasoning, "
-            "logical reasoning, verbal reasoning, patterns, percentages, probability, data interpretation, "
-            "or problem-solving under time pressure. Do not ask about programming, frameworks, databases, "
-            "system design, projects, work experience, or technical implementation."
+            f"This is the Aptitude Round for a target role of {role_name}. Ask one aptitude question involving "
+            "quantitative reasoning, logical reasoning, verbal reasoning, patterns, percentages, probability, data interpretation, "
+            "or problem-solving under time pressure. Do not ask about programming, frameworks, databases, or systems design."
         ),
         RoundNumber.PROJECT_DEEP_DIVE: (
-            "This is the Project and Managerial Round. Ask one question about the candidate's project "
-            "decisions, ownership, teamwork, prioritization, leadership, trade-offs, delivery, or project impact. "
-            "Use the candidate's actual project history. Do not ask generic coding or database questions."
+            f"This is the Project and Managerial Round for a **{role_name}** candidate. "
+            f"Ask one targeted question about project decisions, ownership, teamwork, leadership, and deliverables expected of a {role_name}. "
+            "Use the candidate's actual project history."
         ),
         RoundNumber.TECHNICAL_KNOWLEDGE: (
-            "This is the Technical Round. Ask one role-specific technical question about programming, "
-            "data structures, APIs, databases, networking, cloud, system design, or the technologies in the profile."
+            f"This is the Technical Round for a **{role_name}** position. "
+            f"Ask one rigorous, highly role-specific technical question tailored explicitly to core competencies, tools, frameworks, "
+            f"system design, and engineering paradigms expected of a professional {role_name}."
         ),
         RoundNumber.PROBLEM_SOLVING: (
-            "This is the Problem-Solving and Behavioral Round. Ask one practical scenario, debugging, "
-            "decision-making, communication, conflict, adaptability, or structured reasoning question. "
-            "Do not repeat a pure technical theory question."
+            f"This is the Problem-Solving and Behavioral Round for a {role_name}. "
+            "Ask one practical scenario, debugging, decision-making, conflict, or adaptability question relevant to this domain."
         ),
     }
     return _prompt_header(session, instructions[session.current_round])

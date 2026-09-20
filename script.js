@@ -7,7 +7,7 @@ let interviewSession = null;
 let currentQuestion = null;
 let latestScore = 0;
 let sessionScores = []; 
-let sessionQuestionLogs = []; // Stores question logs silently for AI memory
+let sessionQuestionLogs = []; 
 let recognition = null;
 let isListening = false;
 let pendingTranscript = '';
@@ -68,7 +68,6 @@ async function fetchUserData(email) {
                 document.getElementById("progress-val").innerText = `${latestScore}/100`;
                 document.getElementById("progress-fill").style.width = `${Math.max(0, Math.min(100, latestScore))}%`;
 
-                // Load visible feedback items into the card
                 if (user.Improvements) {
                     const lines = user.Improvements.split('\n').filter(l => l.trim().length > 0);
                     const improvementsContainer = document.getElementById("ai-improvements");
@@ -85,7 +84,6 @@ async function fetchUserData(email) {
                     });
                 }
 
-                // Load background question logs separately from Progress_Description
                 if (user.Progress_Description) {
                     sessionQuestionLogs = user.Progress_Description.split('\n').filter(l => l.trim().length > 0);
                 } else {
@@ -93,6 +91,7 @@ async function fetchUserData(email) {
                 }
 
                 if (user.Role) {
+                    localStorage.setItem("user_role", user.Role);
                     document.getElementById('selected-role-display').innerText = "Selected Role: " + user.Role;
                     document.getElementById('role-dropdown-container').style.display = 'none';
                     document.getElementById('btn-edit-role').style.display = 'inline-block';
@@ -215,9 +214,15 @@ async function ensureInterviewSession() {
             localStorage.removeItem('ai_coach_session_id');
         }
     }
+    
+    const userRole = localStorage.getItem('user_role') || 'Software Engineer';
+
     const response = await apiRequest('/session', {
         method: 'POST',
-        body: JSON.stringify({ candidate_id: getCandidateId() })
+        body: JSON.stringify({ 
+            candidate_id: getCandidateId(),
+            target_role: userRole 
+        })
     });
     interviewSession = { ...response.session, session_id: response.session_id };
     localStorage.setItem('ai_coach_session_id', response.session_id);
@@ -256,7 +261,6 @@ function renderEvaluation(evaluation) {
     document.getElementById('progress-val').innerText = `${latestScore}/100`;
     document.getElementById('progress-fill').style.width = `${latestScore}%`;
 
-    // Push topic silently to session logs (kept out of UI card)
     sessionQuestionLogs.push(`Question Type Log: ${questionTopic}`);
 
     const improvements = document.getElementById('ai-improvements');
@@ -383,13 +387,11 @@ async function submitTranscript(transcript) {
 async function persistAiProgress() {
     if (!currentUserEmail) return;
     
-    // Get visible bullet points for Improvements column
     const listItemsText = Array.from(document.querySelectorAll('#ai-improvements li'))
         .map(item => item.innerText.trim())
         .filter(text => text.length > 0)
         .join('\n');
 
-    // Get hidden logs for Progress_Description column
     const questionLogsText = sessionQuestionLogs.join('\n');
 
     const response = await fetch(`${SUPABASE_URL}?Email_ID=eq.${encodeURIComponent(currentUserEmail)}`, {
@@ -559,6 +561,7 @@ function selectRole(role) {
         otherContainer.style.display = 'block';
     } else {
         otherContainer.style.display = 'none';
+        localStorage.setItem("user_role", role);
         updateRoleInSupabase(role);
     }
 }
@@ -574,6 +577,7 @@ function saveCustomRole() {
     document.getElementById('role-dropdown-container').style.display = 'none';
     document.getElementById('btn-edit-role').style.display = 'inline-block';
     
+    localStorage.setItem("user_role", customRole);
     updateRoleInSupabase(customRole);
 }
 
