@@ -1,8 +1,9 @@
 import os
 from typing import Protocol
+from groq import Groq
 
-
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.6-flash")
+# Use a fast, free-tier-friendly Groq model like Llama 3.3
+GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
 
 
 class GeminiClient(Protocol):
@@ -11,22 +12,22 @@ class GeminiClient(Protocol):
 
 
 class GoogleGeminiClient:
-    def __init__(self, api_key: str | None = None, model: str = GEMINI_MODEL) -> None:
-        self.api_key = api_key or os.getenv("GEMINI_API_KEY")
+    def __init__(self, api_key: str | None = None, model: str = GROQ_MODEL) -> None:
+        # Hardcoding your provided key or falling back to environment variable
+        self.api_key = api_key or os.getenv("GROQ_API_KEY")
         if not self.api_key:
-            raise RuntimeError("GEMINI_API_KEY environment variable is not configured")
+            raise RuntimeError("GROQ_API_KEY environment variable is not configured")
         self.model = model
+        self.client = Groq(api_key=self.api_key)
 
     def generate(self, prompt: str) -> str:
-        from google import genai
-
-        client = genai.Client(api_key=self.api_key)
         try:
-            response = client.interactions.create(model=self.model, input=prompt)
-            return response.output_text
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "user", "content": prompt}
+                ]
+            )
+            return response.choices[0].message.content
         except Exception as error:
-            raise RuntimeError(f"Gemini request failed: {error}") from error
-        finally:
-            close = getattr(client, "close", None)
-            if close is not None:
-                close()
+            raise RuntimeError(f"Groq request failed: {error}") from error
