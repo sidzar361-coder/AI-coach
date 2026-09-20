@@ -15,8 +15,15 @@ let processedFinalResults = new Set();
 let recognitionRunning = false;
 let submitRequested = false;
 
+// Exact round name mapping matching your UI sidebar sidebar items
+const ROUND_DISPLAY_NAMES = {
+    1: 'Aptitude Round',
+    2: 'Project / Managerial Round',
+    3: 'Technical Round',
+    4: 'Problem-Solving / Behavioral Round'
+};
+
 window.addEventListener('load', () => {
-    // 1. Fetch user information from Supabase
     if (currentUserEmail) {
         fetchUserData(currentUserEmail);
     } else {
@@ -24,12 +31,10 @@ window.addEventListener('load', () => {
         document.getElementById("user-email-display").innerText = "Not logged in";
     }
 
-    // 2. Start opening the vertical stairs after an initial pause
     setTimeout(() => {
         const preloader = document.getElementById('preloader');
-        preloader.classList.add('active'); // Triggers stairs moving UP and DOWN
+        preloader.classList.add('active');
 
-        // 3. Wait for transition to finish
         setTimeout(() => {
             document.querySelector('.container').classList.add('animate-bg');
             preloader.style.display = 'none';
@@ -38,7 +43,6 @@ window.addEventListener('load', () => {
     }, 1200);
 });
 
-// Fetch user data from Supabase
 async function fetchUserData(email) {
     try {
         const response = await fetch(`${SUPABASE_URL}?Email_ID=eq.${encodeURIComponent(email)}`, {
@@ -65,7 +69,6 @@ async function fetchUserData(email) {
                 document.getElementById("progress-fill").style.width = `${Math.max(0, Math.min(100, latestScore))}%`;
                 document.getElementById("progress-desc").innerText = progressDesc;
 
-                // Handle loading and displaying saved role from database
                 if (user.Role) {
                     document.getElementById('selected-role-display').innerText = "Selected Role: " + user.Role;
                     document.getElementById('role-dropdown-container').style.display = 'none';
@@ -78,18 +81,46 @@ async function fetchUserData(email) {
     }
 }
 
-// UI Navigation
 function switchTab(tabName) {
     document.querySelectorAll('.view-panel').forEach(panel => panel.classList.remove('active'));
+    document.querySelectorAll('.round-btn').forEach(btn => btn.classList.remove('active-round'));
     
     if (tabName === 'dashboard') {
         document.getElementById('dashboard-view').classList.add('active');
+        // Highlight the Summary & Progress button in sidebar
+        highlightSidebarButton('Summary & Progress');
     } else {
         document.getElementById('interview-view').classList.add('active');
     }
 }
 
+function highlightSidebarButton(roundName) {
+    document.querySelectorAll('.round-btn').forEach(btn => btn.classList.remove('active-round'));
+    
+    // Map button names/identifiers accurately to DOM elements
+    const roundMapping = {
+        'Summary & Progress': ['Summary & Progress', 'btn-summary'],
+        'Aptitude Round': ['Aptitude Round', 'btn-aptitude'],
+        'Project / Managerial Round': ['Project / Managerial Round', 'btn-project'],
+        'Technical Round': ['Technical Round', 'btn-technical'],
+        'Problem-Solving / Behavioral Round': ['Problem-Solving / Behavioral Round', 'btn-problem']
+    };
+
+    // Find button by matching text content inside the sidebar buttons
+    const buttons = document.querySelectorAll('.round-btn');
+    buttons.forEach(btn => {
+        const text = btn.innerText.trim();
+        for (const [key, aliases] of Object.entries(roundMapping)) {
+            if (aliases.includes(text) && key === roundName) {
+                btn.classList.add('active-round');
+            }
+        }
+    });
+}
+
 async function startInterview(roundName) {
+    highlightSidebarButton(roundName);
+
     document.getElementById('current-round-title').innerText = roundName;
     switchTab('interview');
     setInterviewStatus("Connecting to the AI interviewer...");
@@ -97,7 +128,7 @@ async function startInterview(roundName) {
         await ensureInterviewSession();
         const question = await getNextQuestion();
         completedQuestionCount = interviewSession.previous_questions?.filter(
-            question => question.round_number === interviewSession.current_round && question.answered
+            q => q.round_number === interviewSession.current_round && q.answered
         ).length || 0;
         const greeting = `Welcome to the ${roundName}. Question ${completedQuestionCount + 1} of 7.`;
         addChatMessage("AI Coach", `${greeting} ${question.text}`);
@@ -179,13 +210,10 @@ async function getNextQuestion() {
     const response = await apiRequest(`/session/${sessionId}/question`);
     currentQuestion = response.question;
     interviewSession = await apiRequest(`/session/${sessionId}`);
-    const roundNames = {
-        1: 'Aptitude Round',
-        2: 'Project Deep-Dive Round',
-        3: 'Technical Knowledge Round',
-        4: 'Problem-Solving / Behavioral Round'
-    };
-    document.getElementById('current-round-title').innerText = roundNames[interviewSession.current_round] || 'Interview Round';
+    
+    const roundDisplayName = ROUND_DISPLAY_NAMES[interviewSession.current_round] || 'Interview Round';
+    document.getElementById('current-round-title').innerText = roundDisplayName;
+    highlightSidebarButton(roundDisplayName);
     return currentQuestion;
 }
 
@@ -232,6 +260,10 @@ function renderFinalReport(report) {
         dashboardImprovements.appendChild(item.cloneNode(true));
     });
     summary.style.display = 'block';
+
+    // Redirect to Summary & Progress section and highlight its button
+    switchTab('dashboard');
+    highlightSidebarButton('Summary & Progress');
 }
 
 function resetInterviewForRetry() {
@@ -246,6 +278,7 @@ function resetInterviewForRetry() {
     submitRequested = false;
     setListenButton('Speak Answer (STT)', false);
     localStorage.removeItem('ai_coach_session_id');
+    
     document.getElementById('progress-val').innerText = '0/100';
     document.getElementById('progress-fill').style.width = '0%';
     document.getElementById('progress-desc').innerText = 'No completed interview yet.';
@@ -292,16 +325,16 @@ async function submitTranscript(transcript) {
     speakText(reply);
     setInterviewStatus('AI feedback is ready. Start another round or continue practising.');
     await persistAiProgress();
+    
     if (interviewSession.final_report) {
         renderFinalReport(interviewSession.final_report);
         await persistAiProgress();
-        switchTab('dashboard');
-        speakText('All interview rounds are complete. Your summary is ready on the dashboard.');
+        speakText('All interview rounds are complete. Your summary and progress are now ready on the dashboard.');
     } else if (interviewSession.status !== 'completed') {
         try {
             const nextQuestion = await getNextQuestion();
             completedQuestionCount = interviewSession.previous_questions?.filter(
-                question => question.round_number === interviewSession.current_round && question.answered
+                q => q.round_number === interviewSession.current_round && q.answered
             ).length || 0;
             const nextText = `Question ${completedQuestionCount + 1} of 7. ${nextQuestion.text}`;
             addChatMessage('AI Coach', nextText);
@@ -336,7 +369,6 @@ async function persistAiProgress() {
     if (!response.ok) console.warn('Could not persist AI score to Supabase.');
 }
 
-/* TTS & STT Functions */
 function speakText(text) {
     if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
@@ -462,11 +494,6 @@ if (SpeechRecognition) {
     setInterviewStatus('Speech recognition is not supported in this browser.');
 }
 
-// ==========================================
-// Role Selection & Supabase Sync Functions
-// ==========================================
-
-// Filter roles dynamically from search bar input
 function filterRoles() {
     let input = document.getElementById('role-search-input').value.toLowerCase();
     let container = document.getElementById('role-dropdown-container');
@@ -482,7 +509,6 @@ function filterRoles() {
     }
 }
 
-// Handle selection of a role from the list
 function selectRole(role) {
     document.getElementById('selected-role-display').innerText = "Selected Role: " + role;
     document.getElementById('role-dropdown-container').style.display = 'none';
@@ -497,7 +523,6 @@ function selectRole(role) {
     }
 }
 
-// Handle saving custom role when "Other" is chosen
 function saveCustomRole() {
     let customRole = document.getElementById('custom-role-input').value.trim();
     if (!customRole) {
@@ -512,7 +537,6 @@ function saveCustomRole() {
     updateRoleInSupabase(customRole);
 }
 
-// Re-enable role selection view so user can change it
 function enableRoleChange() {
     document.getElementById('role-dropdown-container').style.display = 'block';
     document.getElementById('btn-edit-role').style.display = 'none';
@@ -521,7 +545,6 @@ function enableRoleChange() {
     filterRoles(); 
 }
 
-// Update the user's role field in Supabase database
 async function updateRoleInSupabase(roleName) {
     if (!currentUserEmail) {
         alert("User session not found. Please log in again.");
