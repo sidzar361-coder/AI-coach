@@ -146,7 +146,7 @@
     transition: all 0.3s ease;
 }
 
-.rounds-list li:hover, .rounds-list li.active {
+.rounds-list li:hover, .rounds-list li.active, .rounds-list li.active-round {
     background: #4f46e5;
     color: #fff;
     box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
@@ -218,6 +218,38 @@
 .card h3 {
     margin-bottom: 15px;
     color: #c7d2fe;
+}
+
+/* Fixed Box Size & Custom Scrollbar for AI Improvements & Feedback Box */
+.card:has(#ai-improvements) {
+    max-height: 320px;
+    display: flex;
+    flex-direction: column;
+}
+
+#ai-improvements {
+    max-height: 220px;
+    overflow-y: auto;
+    padding-right: 6px;
+    list-style-position: inside;
+}
+
+#ai-improvements::-webkit-scrollbar {
+    width: 5px;
+}
+
+#ai-improvements::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 4px;
+}
+
+#ai-improvements::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
+#ai-improvements::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.4);
 }
 
 .stat-number {
