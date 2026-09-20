@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from .models import CandidateProfile, Difficulty, InterviewSession, RoundNumber
-from .round_state_machine import start_session, complete_current_round
+from .round_state_machine import start_session
 
 
 def create_session(
@@ -26,10 +26,11 @@ def create_session(
         current_difficulty=initial_difficulty,
         difficulty_progression=[initial_difficulty],
     )
+    
     started_session = start_session(session)
     
-    # Advance session state machine to the requested target round
-    while started_session.current_round < target_round and started_session.current_round != RoundNumber.FINAL_EVALUATION:
-        complete_current_round(started_session)
+    # Directly set the starting round if a specific target round was requested
+    if target_round > 1:
+        started_session.current_round = RoundNumber(target_round)
         
     return started_session
