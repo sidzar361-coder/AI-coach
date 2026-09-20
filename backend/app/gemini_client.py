@@ -3,7 +3,8 @@ from typing import Protocol
 from groq import Groq
 
 # Use a fast, free-tier-friendly Groq model like Llama 3.3
-GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
+# Change to a currently active Groq model
+GROQ_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-20b")
 
 
 class GeminiClient(Protocol):
