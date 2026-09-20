@@ -221,34 +221,54 @@
 }
 
 /* Fixed Box Size & Custom Scrollbar for AI Improvements & Feedback Box */
-.card:has(#ai-improvements) {
+.card:has(#ai-improvements),
+.card:has(#progress-desc) {
     max-height: 320px;
+    height: 320px;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
 #ai-improvements {
-    max-height: 220px;
+    max-height: 180px;
     overflow-y: auto;
     padding-right: 6px;
     list-style-position: inside;
+    margin-top: 6px;
 }
 
-#ai-improvements::-webkit-scrollbar {
+#progress-desc {
+    max-height: 120px;
+    overflow-y: auto;
+    word-break: break-word;
+    padding-right: 4px;
+}
+
+/* Custom Scrollbars */
+.card::-webkit-scrollbar,
+#ai-improvements::-webkit-scrollbar,
+#progress-desc::-webkit-scrollbar {
     width: 5px;
 }
 
-#ai-improvements::-webkit-scrollbar-track {
+.card::-webkit-scrollbar-track,
+#ai-improvements::-webkit-scrollbar-track,
+#progress-desc::-webkit-scrollbar-track {
     background: rgba(255, 255, 255, 0.03);
     border-radius: 4px;
 }
 
-#ai-improvements::-webkit-scrollbar-thumb {
+.card::-webkit-scrollbar-thumb,
+#ai-improvements::-webkit-scrollbar-thumb,
+#progress-desc::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.2);
     border-radius: 4px;
 }
 
-#ai-improvements::-webkit-scrollbar-thumb:hover {
+.card::-webkit-scrollbar-thumb:hover,
+#ai-improvements::-webkit-scrollbar-thumb:hover,
+#progress-desc::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.4);
 }
 
