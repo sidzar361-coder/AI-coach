@@ -25,6 +25,7 @@ class CreateSessionRequest(BaseModel):
     candidate_profile: CandidateProfile = Field(default_factory=CandidateProfile)
     current_stage: str = Field(default="candidate_background", min_length=1)
     initial_difficulty: Difficulty = Difficulty.MEDIUM
+    target_role: Optional[str] = None
 
 
 class CreateSessionResponse(BaseModel):
